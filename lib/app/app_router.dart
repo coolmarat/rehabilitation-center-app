@@ -11,6 +11,8 @@ import 'package:rehabilitation_center_app/features/clients/presentation/screens/
 // Импортируем экран Расписания
 import 'package:rehabilitation_center_app/features/schedule/presentation/screens/schedule_screen.dart';
 import 'package:rehabilitation_center_app/features/activity_types/presentation/screens/activity_types_screen.dart';
+// Импортируем экран Финансового отчета
+import 'package:rehabilitation_center_app/features/reports/presentation/finance_report_screen.dart';
 
 class AppRouter {
   // Ключ для основного навигатора (опционально, но может пригодиться)
@@ -55,8 +57,8 @@ class AppRouter {
           GoRoute(
             path: '/reports',
             builder: (BuildContext context, GoRouterState state) {
-              // TODO: Заменить на реальный ReportsScreen
-              return const Center(child: Text('Отчеты (Заглушка)')); 
+              // TODO: Заменить на реальный ReportsScreen -> Заменено!
+              return const FinanceReportScreen(); // Используем реальный экран отчета
             },
           ),
           // Добавим маршрут для настроек как пример

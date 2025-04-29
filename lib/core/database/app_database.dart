@@ -15,6 +15,14 @@ part 'tables/sessions.dart';
 // Эта строка указывает drift сгенерировать файл
 part 'app_database.g.dart'; 
 
+// Define a class to hold the aggregated finance report results
+class FinanceReportResult {
+  final String employeeName;
+  final double totalAmount;
+
+  FinanceReportResult({required this.employeeName, required this.totalAmount});
+}
+
 @DriftDatabase(tables: [
   Employees,
   Parents,
@@ -55,6 +63,45 @@ class AppDatabase extends _$AppDatabase {
       // if (from == 4) { ... }
     },
   );
+
+  // --- Methods for fetching data ---
+
+  // Fetch all employees
+  Future<List<EmployeeEntry>> getAllEmployees() => select(employees).get();
+
+  // Fetch finance report data
+  Future<List<FinanceReportResult>> getFinanceReport({
+    required DateTime start,
+    required DateTime end,
+    int? employeeId,
+  }) {
+    final query = select(sessions).join([
+      innerJoin(employees, employees.id.equalsExp(sessions.employeeId)),
+    ]);
+
+    // Filter by date range
+    query.where(sessions.sessionDateTime.isBetweenValues(start, end));
+
+    // Filter by employee if specified
+    if (employeeId != null) {
+      query.where(sessions.employeeId.equals(employeeId));
+    }
+
+    // Group by employee and calculate sum of prices
+    final employeeName = employees.fullName;
+    final totalAmount = sessions.price.sum();
+
+    query
+      ..groupBy([employees.id]) // Group by employee id
+      ..addColumns([employeeName, totalAmount]); // Select name and sum
+
+    return query.map((row) {
+      return FinanceReportResult(
+        employeeName: row.read(employeeName)!,
+        totalAmount: row.read(totalAmount) ?? 0.0,
+      );
+    }).get();
+  }
 
   // Здесь можно добавить методы для сложных запросов (DAO) позже
 }

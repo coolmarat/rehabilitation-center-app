@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart'; // For save file dialog
 import 'dart:io'; // For File operations
 
 import '../../../core/database/app_database.dart';
+import '../../../../shared_widgets/filterable_dropdown.dart'; // Import the new widget
 
 class FinanceReportScreen extends StatefulWidget {
   const FinanceReportScreen({super.key});
@@ -223,29 +224,19 @@ class _FinanceReportScreenState extends State<FinanceReportScreen> {
             if (_isLoadingEmployees)
               const Center(child: CircularProgressIndicator())
             else if (_employees.isNotEmpty)
-              DropdownButtonFormField<EmployeeEntry>(
-                value: _selectedEmployee,
-                decoration: const InputDecoration(
-                  labelText: 'Сотрудник',
-                  border: OutlineInputBorder(),
-                ),
-                items: _employees.map((EmployeeEntry employee) {
-                  return DropdownMenuItem<EmployeeEntry>(
-                    value: employee,
-                    child: Text(employee.fullName),
-                  );
-                }).toList(),
-                onChanged: (EmployeeEntry? newValue) {
+              FilterableDropdown<EmployeeEntry>(
+                items: _employees,
+                getName: (employee) => employee.fullName, // Assuming EmployeeEntry has fullName
+                getId: (employee) => employee, // Using the object itself as ID for selection logic
+                handleSelected: (employee) {
                   setState(() {
-                    _selectedEmployee = newValue;
+                    _selectedEmployee = employee;
                   });
                 },
-                // Handle potential null value if list is somehow empty after loading
-                // Although the logic tries to prevent this
-                isExpanded: true,
+                hintText: 'Выберите сотрудника',
               )
             else
-              const Text('Нет доступных сотрудников.'), // Or some other placeholder
+              const Text('Нет доступных сотрудников для выбора.'),
 
             const SizedBox(height: 20),
 

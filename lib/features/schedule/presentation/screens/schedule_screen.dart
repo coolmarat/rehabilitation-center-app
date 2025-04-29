@@ -3,12 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart'; // Для форматирования дат
-import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
-import 'package:rehabilitation_center_app/features/schedule/domain/entities/session_details.dart'; // Добавляем импорт
-import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart';
-import 'package:table_calendar/table_calendar.dart';
-
-import '../../domain/session_model.dart'; // Added back import
+// Use the correct path for ActivityType
+import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart'; 
+import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
+import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart'; // <-- Re-import domain Session
+import 'package:table_calendar/table_calendar.dart'; // <-- Correct import
+import '../../../../core/database/app_database.dart'; // <-- Keep direct import
+// import '../../../../core/models/models.dart'; // <-- Removed, use specific domain models
+import '../../../../shared_widgets/filterable_dropdown.dart'; // <-- Corrected relative path
+import '../../domain/entities/session_details.dart'; // <-- Relative path
+import '../bloc/schedule_bloc.dart'; // <-- Keep only main BLoC import
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -294,6 +299,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       context: context,
       barrierDismissible: false, // Начнем с false
       builder: (_) {
+        // Используем новый context для builder
+        // Передаем существующий Bloc в поддерево диалога
         return BlocProvider.value(
           value: scheduleBloc,
           child: BlocListener<ScheduleBloc, ScheduleState>(
@@ -393,26 +400,8 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
             }
             // Если данные формы загружены, показываем форму
             else if (state is ScheduleFormDataLoaded) {
-              final formData = state.formData;
-
-              // Устанавливаем цену по умолчанию при первой загрузке данных,
-              // если услуга выбрана и поле цены пустое.
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted &&
-                    _priceController.text.isEmpty &&
-                    _selectedActivityTypeId != null) {
-                  try {
-                    final selectedActivity = formData.activityTypes.firstWhere(
-                      (a) => a.id == _selectedActivityTypeId,
-                    );
-                    _priceController.text = selectedActivity.defaultPrice
-                        .toStringAsFixed(2); // Форматируем до 2 знаков
-                  } catch (e) {
-                    print('Error finding default price for activity type: $e');
-                    _priceController.clear(); // Очищаем, если не нашли
-                  }
-                }
-              });
+              // Remove unused formData variable:
+              // final formData = state.formData;
 
               return Form(
                 key: _formKey, // Привязываем ключ к форме
@@ -430,7 +419,21 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Выпадающий список Сотрудников
+                    // --- Employee Dropdown ---
+                    FilterableDropdown<Employee>(
+                      items: state.formData.employees,
+                      getName: (employee) => employee.fullName,
+                      getId: (employee) => employee.id,
+                      handleSelected: (employee) {
+                        setState(() {
+                          _selectedEmployeeId = employee.id;
+                        });
+                      },
+                      hintText: 'Сотрудник',
+                      // TODO: Add validation equivalent if needed
+                    ),
+                    // Выпадающий список Сотрудников (OLD)
+                    /*
                     DropdownButtonFormField<int>(
                       value: _selectedEmployeeId,
                       hint: const Text('Сотрудник'),
@@ -451,8 +454,26 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                               value == null ? 'Выберите сотрудника' : null,
                       isExpanded: true,
                     ),
+                    */
                     const SizedBox(height: 8),
-                    // Выпадающий список Услуг (Типов занятий)
+                    // --- Activity Type Dropdown ---
+                    FilterableDropdown<ActivityType>(
+                      items: state.formData.activityTypes,
+                      getName: (activity) => activity.name,
+                      getId: (activity) => activity.id,
+                      handleSelected: (activity) {
+                        setState(() {
+                          _selectedActivityTypeId = activity.id;
+                          // Обновляем цену при смене услуги
+                          _priceController.text = activity.defaultPrice
+                              .toStringAsFixed(2);
+                        });
+                      },
+                      hintText: 'Услуга',
+                      // TODO: Add validation equivalent if needed
+                    ),
+                    // Выпадающий список Услуг (Типов занятий) (OLD)
+                    /*
                     DropdownButtonFormField<int>(
                       value: _selectedActivityTypeId,
                       hint: const Text('Услуга'),
@@ -489,9 +510,23 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                           (value) => value == null ? 'Выберите услугу' : null,
                       isExpanded: true,
                     ),
+                    */
                     const SizedBox(height: 8),
-                    // Выпадающий список Детей
-                    DropdownButtonFormField<int>(
+                    // --- Child Dropdown ---
+                    FilterableDropdown<Child>(
+                      items: state.formData.children,
+                      getName: (child) => child.fullName,
+                      getId: (child) => child.id,
+                      handleSelected: (child) {
+                        setState(() {
+                          _selectedChildId = child.id;
+                        });
+                      },
+                      hintText: 'Ребенок',
+                      // TODO: Add validation equivalent if needed
+                    ),
+                    // Выпадающий список Детей (OLD)
+                    /* DropdownButtonFormField<int>(
                       value: _selectedChildId,
                       hint: const Text('Ребенок'),
                       items:
@@ -509,9 +544,8 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                       validator:
                           (value) => value == null ? 'Выберите ребенка' : null,
                       isExpanded: true,
-                    ),
+                    ), */
                     const SizedBox(height: 8),
-                    // Поле для Цены
                     TextFormField(
                       controller: _priceController,
                       decoration: const InputDecoration(labelText: 'Цена (₽)'),
@@ -668,13 +702,24 @@ class _EditSessionDialogContent extends StatefulWidget {
 
 class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
   final _formKey = GlobalKey<FormState>();
+  late TextEditingController _priceController;
+  late TextEditingController _durationController;
+  late TextEditingController _notesController;
+  TimeOfDay? _selectedTime;
   int? _selectedEmployeeId;
   int? _selectedActivityTypeId;
   int? _selectedChildId;
-  TimeOfDay? _selectedTime;
-  final _priceController = TextEditingController();
-  final _notesController = TextEditingController();
-  final _durationController = TextEditingController();
+  bool _isPaid = false;
+
+  // Helper function to find initial item by ID
+  T? _findItemById<T>(List<T> items, int? id, int Function(T item) getId) {
+    if (id == null) return null;
+    try {
+      return items.firstWhere((item) => getId(item) == id);
+    } catch (e) {
+      return null; // Not found
+    }
+  }
 
   @override
   void initState() {
@@ -684,9 +729,14 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     _selectedEmployeeId = widget.session.employeeId;
     _selectedActivityTypeId = widget.session.activityTypeId;
     _selectedChildId = widget.session.childId;
-    _priceController.text = widget.session.price.toStringAsFixed(2);
-    _durationController.text = widget.session.duration.inMinutes.toString();
-    _notesController.text = widget.session.notes ?? '';
+    _priceController = TextEditingController(
+      text: widget.session.price.toStringAsFixed(2),
+    );
+    _durationController = TextEditingController(
+      text: widget.session.duration.inMinutes.toString(),
+    );
+    _isPaid = widget.session.isCompleted;
+    _notesController = TextEditingController(text: widget.session.notes ?? '');
 
     // Загружаем данные для формы, если они еще не загружены
     final currentState = BlocProvider.of<ScheduleBloc>(context).state;
@@ -699,8 +749,8 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
   @override
   void dispose() {
     _priceController.dispose();
-    _notesController.dispose();
     _durationController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -719,7 +769,6 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Используем BlocConsumer для управления состоянием диалога
     return BlocConsumer<ScheduleBloc, ScheduleState>(
       listener: (context, state) {
         // Логика для закрытия диалога или показа SnackBar перенесена
@@ -774,7 +823,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     );
   }
 
-  // Метод для построения содержимого формы (идентичен диалогу добавления, можно вынести в общий виджет)
+  // Метод для построения содержимого формы (идентичен диалогу добавления)
   Widget _buildFormContent(BuildContext context, ScheduleState state) {
     if (state is ScheduleFormDataLoading) {
       return const Padding(
@@ -782,9 +831,8 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
         child: Center(child: CircularProgressIndicator()),
       );
     } else if (state is ScheduleFormDataLoaded) {
-      final formData = state.formData;
-      // НЕ нужно устанавливать цену по умолчанию при редактировании
-      // WidgetsBinding.instance.addPostFrameCallback((_) { ... });
+      // Remove unused formData variable:
+      // final formData = state.formData;
 
       return Form(
         key: _formKey,
@@ -811,65 +859,133 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
                 ),
               ),
             const SizedBox(height: 16),
+            // --- Employee Dropdown ---
+            FilterableDropdown<Employee>(
+              items: state.formData.employees,
+              getName: (employee) => employee.fullName,
+              getId: (employee) => employee.id,
+              handleSelected: (employee) {
+                setState(() {
+                  _selectedEmployeeId = employee.id;
+                });
+              },
+              hintText: 'Сотрудник',
+              initialItem: _findItemById(
+                state.formData.employees,
+                _selectedEmployeeId,
+                (e) => e.id,
+              ),
+              // TODO: Add validation equivalent if needed
+            ),
+            // Выпадающий список Сотрудников (OLD)
+            /*
             DropdownButtonFormField<int>(
               value: _selectedEmployeeId,
               hint: const Text('Сотрудник'),
-              items:
-                  formData.employees
-                      .map(
-                        (employee) => DropdownMenuItem(
-                          value: employee.id,
-                          child: Text(employee.fullName),
-                        ),
-                      )
-                      .toList(),
-              onChanged: (value) => setState(() => _selectedEmployeeId = value),
-              validator:
-                  (value) => value == null ? 'Выберите сотрудника' : null,
+              items: state.formData.employees.map((employee) {
+                return DropdownMenuItem(
+                  value: employee.id,
+                  child: Text(employee.fullName),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedEmployeeId = value;
+                });
+              },
+              validator: (value) => value == null ? 'Выберите сотрудника' : null,
               isExpanded: true,
             ),
+            */
             const SizedBox(height: 8),
+            // --- Activity Type Dropdown ---
+            FilterableDropdown<ActivityType>(
+              items: state.formData.activityTypes,
+              getName: (activity) => activity.name,
+              getId: (activity) => activity.id,
+              handleSelected: (activity) {
+                setState(() {
+                  _selectedActivityTypeId = activity.id;
+                  _updatePriceFromActivity(
+                    state.formData.activityTypes,
+                    activity,
+                  );
+                  _updateDurationFromActivity(
+                    state.formData.activityTypes,
+                    activity,
+                  );
+                });
+              },
+              hintText: 'Услуга',
+              initialItem: _findItemById(
+                state.formData.activityTypes,
+                _selectedActivityTypeId,
+                (a) => a.id,
+              ),
+              // TODO: Add validation equivalent if needed
+            ),
+            // Выпадающий список Услуг (Типов занятий) (OLD)
+            /*
             DropdownButtonFormField<int>(
               value: _selectedActivityTypeId,
               hint: const Text('Услуга'),
-              items:
-                  formData.activityTypes
-                      .map(
-                        (activity) => DropdownMenuItem(
-                          value: activity.id,
-                          child: Text(activity.name),
-                        ),
-                      )
-                      .toList(),
+              items: state.formData.activityTypes.map((activity) {
+                return DropdownMenuItem(
+                  value: activity.id,
+                  child: Text(activity.name),
+                );
+              }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedActivityTypeId = value;
-                  // Обновляем цену и длительность при смене услуги (опционально для редактирования)
-                  _updatePriceFromActivity(formData.activityTypes);
-                  _updateDurationFromActivity(formData.activityTypes);
+                  _updatePriceFromActivity(state.formData.activityTypes);
+                   _updateDurationFromActivity(state.formData.activityTypes);
                 });
               },
               validator: (value) => value == null ? 'Выберите услугу' : null,
               isExpanded: true,
             ),
+            */
             const SizedBox(height: 8),
+            // --- Child Dropdown ---
+            FilterableDropdown<Child>(
+              items: state.formData.children,
+              getName: (child) => child.fullName,
+              getId: (child) => child.id,
+              handleSelected: (child) {
+                setState(() {
+                  _selectedChildId = child.id;
+                });
+              },
+              hintText: 'Ребенок',
+              initialItem: _findItemById(
+                state.formData.children,
+                _selectedChildId,
+                (c) => c.id,
+              ),
+              // TODO: Add validation equivalent if needed
+            ),
+            // Выпадающий список Детей (OLD)
+            /*
             DropdownButtonFormField<int>(
               value: _selectedChildId,
               hint: const Text('Ребенок'),
-              items:
-                  formData.children
-                      .map(
-                        (child) => DropdownMenuItem(
-                          value: child.id,
-                          child: Text(child.fullName),
-                        ),
-                      )
-                      .toList(),
-              onChanged: (value) => setState(() => _selectedChildId = value),
+              items: state.formData.children.map((child) {
+                return DropdownMenuItem(
+                  value: child.id,
+                  child: Text(child.fullName),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedChildId = value;
+                });
+              },
               validator: (value) => value == null ? 'Выберите ребенка' : null,
               isExpanded: true,
             ),
-            const SizedBox(height: 8),
+            */
+            const SizedBox(height: 16),
             TextFormField(
               controller: _durationController,
               decoration: const InputDecoration(
@@ -926,36 +1042,52 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
   }
 
   // Вспомогательные методы для обновления цены и длительности (идентичны диалогу добавления)
-  void _updatePriceFromActivity(List<ActivityType> activities) {
-    if (_selectedActivityTypeId != null) {
+  void _updatePriceFromActivity(
+    List<ActivityType> activities,
+    ActivityType? selectedActivity, // Pass the selected activity directly
+  ) {
+    if (selectedActivity != null) {
+      _priceController.text = selectedActivity.defaultPrice.toStringAsFixed(2);
+    } else {
+      _priceController.clear();
+    }
+    /* if (_selectedActivityTypeId != null) {
       try {
-        final selectedActivity = activities.firstWhere(
-          (a) => a.id == _selectedActivityTypeId,
-        );
-        _priceController.text = selectedActivity.defaultPrice.toStringAsFixed(
-          2,
-        );
+        final selectedActivity =
+            activities.firstWhere((a) => a.id == _selectedActivityTypeId);
+        _priceController.text = selectedActivity.defaultPrice.toStringAsFixed(2);
       } catch (e) {
         print('Error finding price for activity type: $e');
         _priceController.clear();
       }
     } else {
       _priceController.clear();
-    }
+    } */
   }
 
-  void _updateDurationFromActivity(List<ActivityType> activities) {
-    if (_selectedActivityTypeId != null) {
+  void _updateDurationFromActivity(
+    List<ActivityType> activities,
+    ActivityType? selectedActivity, // Pass the selected activity directly
+  ) {
+    if (selectedActivity != null) {
+      _durationController.text =
+          selectedActivity.durationInMinutes.toString(); // <-- Use correct field name
+    } else {
+      _durationController.clear();
+    }
+
+    /* if (_selectedActivityTypeId != null) {
       try {
-        final selectedActivity = activities.firstWhere(
-          (a) => a.id == _selectedActivityTypeId,
-        );
-        _durationController.text =
-            selectedActivity.durationInMinutes.toString(); // Correct field name
+        final selectedActivity =
+            activities.firstWhere((a) => a.id == _selectedActivityTypeId);
+        _durationController.text = selectedActivity.defaultDurationMinutes.toString();
       } catch (e) {
         print('Error finding duration for activity type: $e');
+        _durationController.clear();
       }
-    }
+    } else {
+      _durationController.clear();
+    } */
   }
 
   // Метод для отправки ИЗМЕНЕННОЙ формы
@@ -993,25 +1125,41 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
       final notes =
           _notesController.text.isNotEmpty ? _notesController.text : null;
 
-      // Создаем обновленный объект Session, используя ID исходной сессии
-      final updatedSession = Session(
-        // Use Session directly
+      // Создаем обновленный объект SessionEntry (Drift data class)
+      final updatedSessionEntry = SessionEntry(
         id: widget.session.sessionId, // Используем ID из редактируемой сессии!
         activityTypeId: _selectedActivityTypeId!,
         employeeId: _selectedEmployeeId!,
         childId: _selectedChildId!,
-        dateTime: dateTime,
-        duration: duration,
+        sessionDateTime: dateTime,
+        durationMinutes: duration.inMinutes,
         price: price,
         // Статус isCompleted пока не редактируем здесь
-        isCompleted: widget.session.isCompleted,
+        isCompleted: _isPaid,
         notes: notes,
       );
 
-      // Отправляем событие обновления в Bloc
+      // Map SessionEntry to domain Session model
+      final updatedDomainSession = Session(
+          id: updatedSessionEntry.id, // <-- Use 'id' instead of 'sessionId'
+          dateTime: updatedSessionEntry.sessionDateTime,
+          duration: Duration(minutes: updatedSessionEntry.durationMinutes),
+          price: updatedSessionEntry.price,
+          isCompleted: updatedSessionEntry.isCompleted,
+          notes: updatedSessionEntry.notes,
+          activityTypeId: updatedSessionEntry.activityTypeId,
+          employeeId: updatedSessionEntry.employeeId,
+          childId: updatedSessionEntry.childId,
+          // Note: Domain Session might not need relationship data here
+          // employeeName: '', // Fetch if needed by BLoC
+          // activityName: '', // Fetch if needed by BLoC
+          // childName: '',    // Fetch if needed by BLoC
+          );
+
+      // Отправляем событие обновления в Bloc с Domain Session
       BlocProvider.of<ScheduleBloc>(
         context,
-      ).add(UpdateExistingSession(updatedSession));
+      ).add(UpdateExistingSession(updatedDomainSession)); // <-- Pass domain Session
     }
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:provider/provider.dart'; // Assuming you use Provider for state management/DI
+import 'package:csv/csv.dart'; // For CSV generation
+import 'package:file_picker/file_picker.dart'; // For save file dialog
+import 'dart:io'; // For File operations
 
 import '../../../core/database/app_database.dart';
 
@@ -110,6 +113,55 @@ class _FinanceReportScreenState extends State<FinanceReportScreen> {
     }
   }
 
+  Future<void> _exportToCsv() async {
+    if (_reportResults.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Нет данных для экспорта.')),
+      );
+      return;
+    }
+
+    List<List<dynamic>> rows = [];
+    // Add header row
+    rows.add(['Сотрудник', 'Сумма (руб.)']);
+    // Add data rows
+    for (var result in _reportResults) {
+      rows.add([result.employeeName, result.totalAmount]);
+    }
+
+    String csvData = const ListToCsvConverter().convert(rows);
+
+    try {
+      // Suggest a filename
+      final DateFormat formatter = DateFormat('yyyyMMdd');
+      final String startDateStr = _startDate != null ? formatter.format(_startDate!) : 'nodate';
+      final String endDateStr = _endDate != null ? formatter.format(_endDate!) : 'nodate';
+      final String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Сохранить отчет как CSV',
+        fileName: 'finance_report_${startDateStr}_to_$endDateStr.csv',
+        allowedExtensions: ['csv'],
+        type: FileType.custom,
+      );
+
+      if (outputFile != null) {
+        final file = File(outputFile);
+        await file.writeAsString(csvData);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Отчет успешно сохранен в $outputFile')),
+        );
+      } else {
+        // User canceled the picker
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Экспорт отменен.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка экспорта в CSV: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Format dates for display, handle nulls
@@ -120,6 +172,15 @@ class _FinanceReportScreenState extends State<FinanceReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Финансовый отчет'),
+        actions: [
+          // Add Export Button here
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Экспорт в CSV',
+            // Disable button if there are no results or currently loading
+            onPressed: _reportResults.isNotEmpty && !_isLoading ? _exportToCsv : null,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

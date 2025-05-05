@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart'; // Import material.dart for TimeOfDay
+import 'package:table_calendar/table_calendar.dart'; // Import table_calendar for isSameDay
 // Keep these imports here as they are used in the 'part' files
 import 'package:rehabilitation_center_app/features/schedule/domain/entities/schedule_form_data.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart';
@@ -142,10 +143,44 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   ) async {
     emit(ScheduleLoading());
     try {
-      final sessions = await _getSessionsForDay(event.date);
-      emit(ScheduleLoaded(selectedDate: event.date, sessions: sessions));
+      // Определяем диапазон дат для текущего месяца
+      final startOfMonth = DateTime(event.date.year, event.date.month, 1);
+      final endOfMonth = DateTime(event.date.year, event.date.month + 1, 0);
+
+      // Создаем список дат в диапазоне
+      final datesInMonth = List.generate(
+        endOfMonth.difference(startOfMonth).inDays + 1,
+        (index) => startOfMonth.add(Duration(days: index)),
+      );
+
+      // Загружаем сессии для каждой даты в месяце
+      final List<List<SessionDetails>> sessionsForDates = await Future.wait(
+        datesInMonth.map((date) => _getSessionsForDay(date)),
+      );
+
+      // Объединяем все сессии в один список
+      final allSessionsInView =
+          sessionsForDates.expand((list) => list).toList();
+
+      // Получаем сессии только для выбранного дня
+      final sessionsForSelectedDay =
+          allSessionsInView.where((session) {
+            return isSameDay(session.dateTime, event.date);
+          }).toList();
+
+      emit(
+        ScheduleLoaded(
+          selectedDate: event.date,
+          sessions: sessionsForSelectedDay,
+          allSessionsInView:
+              allSessionsInView, // Передаем все сессии в представлении
+        ),
+      );
     } catch (e) {
       emit(ScheduleError('Ошибка загрузки сессий: ${e.toString()}'));
+      // Важно: после ошибки вернуть пользователя в состояние с загруженными сессиями
+      // (если они были до ошибки) или в начальное состояние
+      // Для простоты пока просто оставим ScheduleError
     }
   }
 

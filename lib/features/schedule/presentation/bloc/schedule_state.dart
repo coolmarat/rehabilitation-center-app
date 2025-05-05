@@ -17,12 +17,18 @@ class ScheduleLoading extends ScheduleState {}
 // Состояние успешной загрузки сессий для дня
 class ScheduleLoaded extends ScheduleState {
   final DateTime selectedDate;
-  final List<SessionDetails> sessions;
+  final List<SessionDetails> sessions; // Сессии для выбранного дня
+  final List<SessionDetails>
+  allSessionsInView; // Все сессии в текущем представлении календаря (например, за месяц)
 
-  const ScheduleLoaded({required this.selectedDate, required this.sessions});
+  const ScheduleLoaded({
+    required this.selectedDate,
+    required this.sessions,
+    required this.allSessionsInView, // Добавляем новое свойство
+  });
 
   @override
-  List<Object?> get props => [selectedDate, sessions];
+  List<Object?> get props => [selectedDate, sessions, allSessionsInView]; // Обновляем props
 }
 
 // Состояние загрузки данных для формы

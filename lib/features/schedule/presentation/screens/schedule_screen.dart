@@ -36,6 +36,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     // BlocProvider.of<ScheduleBloc>(context).add(LoadSessionsForDay(_focusedDay));
   }
 
+  // Метод для получения сессий для конкретного дня
+  List<SessionDetails> _getSessionsForDay(DateTime day) {
+    // Получаем текущее состояние Bloc
+    final state = BlocProvider.of<ScheduleBloc>(context).state;
+    // Если состояние ScheduleLoaded, фильтруем сессии по дате из ВСЕХ загруженных сессий
+    if (state is ScheduleLoaded) {
+      return state.allSessionsInView.where((session) {
+        // Используем state.allSessionsInView
+        // Используем state.allSessions
+        // Сравниваем только дату, игнорируя время
+        return isSameDay(session.dateTime, day);
+      }).toList();
+    }
+    // В противном случае возвращаем пустой список
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,6 +171,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     return null;
                   },
                 ),
+                eventLoader: _getSessionsForDay, // Use the new method here
               );
             },
           ),

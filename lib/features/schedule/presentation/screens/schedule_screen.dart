@@ -68,115 +68,137 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
         children: [
-          // Calendar Widget
-          BlocBuilder<ScheduleBloc, ScheduleState>(
-            // Build the calendar only once, it doesn't need to rebuild on every state change
-            // unless the selected/focused day logic depends heavily on the state itself.
-            // For now, let's keep it simple.
-            buildWhen:
-                (previous, current) =>
-                    previous.runtimeType !=
-                    current
-                        .runtimeType, // Rebuild only on state type change if needed
-            builder: (context, state) {
-              // Use state.selectedDate if available, otherwise fallback to local state
-              final currentSelectedDay =
-                  state is ScheduleLoaded ? state.selectedDate : _selectedDay;
-              final currentFocusedDay =
-                  state is ScheduleLoaded
-                      ? state.selectedDate
-                      : _focusedDay; // Or keep _focusedDay
+          // Left Column: Calendar and Filters
+          Expanded(
+            child: Column(
+              children: [
+                // Calendar Widget
+                BlocBuilder<ScheduleBloc, ScheduleState>(
+                  // Build the calendar only once, it doesn't need to rebuild on every state change
+                  // unless the selected/focused day logic depends heavily on the state itself.
+                  // For now, let's keep it simple.
+                  buildWhen:
+                      (previous, current) =>
+                          previous.runtimeType !=
+                          current
+                              .runtimeType, // Rebuild only on state type change if needed
+                  builder: (context, state) {
+                    // Use state.selectedDate if available, otherwise fallback to local state
+                    final currentSelectedDay =
+                        state is ScheduleLoaded
+                            ? state.selectedDate
+                            : _selectedDay;
+                    final currentFocusedDay =
+                        state is ScheduleLoaded
+                            ? state.selectedDate
+                            : _focusedDay; // Or keep _focusedDay
 
-              return TableCalendar(
-                locale: 'ru_RU', // Set locale if needed
-                firstDay: DateTime.utc(2020, 1, 1),
-                lastDay: DateTime.utc(2030, 12, 31),
-                focusedDay:
-                    currentFocusedDay, // Use state's date or local _focusedDay
-                selectedDayPredicate: (day) {
-                  // Use `isSameDay` to ignore time portion for selection
-                  return isSameDay(currentSelectedDay, day);
-                },
-                onDaySelected: (selectedDay, focusedDay) {
-                  if (!isSameDay(_selectedDay, selectedDay)) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay; // Update focused day as well
-                    });
-                    // Trigger loading sessions for the newly selected day
-                    BlocProvider.of<ScheduleBloc>(
-                      context,
-                    ).add(LoadSessionsForDay(selectedDay));
-                  }
-                },
-                calendarFormat: CalendarFormat.month, // Or week, twoWeeks
-                onPageChanged: (focusedDay) {
-                  // No need to call `setState()` here, `focusedDay` is handled internally
-                  // You might want to load data if your logic requires pre-fetching for pages
-                  _focusedDay =
-                      focusedDay; // Keep track of focused day if needed elsewhere
-                },
-                // Add other customizations as needed (header style, day builders, etc.)
-                headerStyle: HeaderStyle(
-                  formatButtonVisible:
-                      false, // Hide format button if you only want month view
-                  titleCentered: true,
-                ),
-                calendarStyle: CalendarStyle(
-                  // Highlight today's date
-                  todayDecoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  // Highlight selected date
-                  selectedDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                // Add markers for sessions
-                calendarBuilders: CalendarBuilders(
-                  markerBuilder: (context, day, events) {
-                    // 'events' here is the list of sessions for the day
-                    if (events.isNotEmpty) {
-                      return Positioned(
-                        right: 1,
-                        bottom: 1,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
-                            shape: BoxShape.circle,
-                          ),
-                          width: 16.0,
-                          height: 16.0,
-                          child: Center(
-                            child: Text(
-                              '${events.length}',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodySmall!.copyWith(
-                                color:
-                                    Theme.of(context).colorScheme.onSecondary,
-                                fontSize: 10.0,
-                              ),
-                            ),
-                          ),
+                    return TableCalendar(
+                      locale: 'ru_RU', // Set locale if needed
+                      firstDay: DateTime.utc(2020, 1, 1),
+                      lastDay: DateTime.utc(2030, 12, 31),
+                      focusedDay:
+                          currentFocusedDay, // Use state's date or local _focusedDay
+                      selectedDayPredicate: (day) {
+                        // Use `isSameDay` to ignore time portion for selection
+                        return isSameDay(currentSelectedDay, day);
+                      },
+                      onDaySelected: (selectedDay, focusedDay) {
+                        if (!isSameDay(_selectedDay, selectedDay)) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay =
+                                focusedDay; // Update focused day as well
+                          });
+                          // Trigger loading sessions for the newly selected day
+                          BlocProvider.of<ScheduleBloc>(
+                            context,
+                          ).add(LoadSessionsForDay(selectedDay));
+                        }
+                      },
+                      calendarFormat: CalendarFormat.month, // Or week, twoWeeks
+                      onPageChanged: (focusedDay) {
+                        // No need to call `setState()` here, `focusedDay` is handled internally
+                        // You might want to load data if your logic requires pre-fetching for pages
+                        _focusedDay =
+                            focusedDay; // Keep track of focused day if needed elsewhere
+                      },
+                      // Add other customizations as needed (header style, day builders, etc.)
+                      headerStyle: HeaderStyle(
+                        formatButtonVisible:
+                            false, // Hide format button if you only want month view
+                        titleCentered: true,
+                      ),
+                      calendarStyle: CalendarStyle(
+                        // Highlight today's date
+                        todayDecoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withOpacity(0.5),
+                          shape: BoxShape.circle,
                         ),
-                      );
-                    }
-                    return null;
+                        // Highlight selected date
+                        selectedDecoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      // Add markers for sessions
+                      calendarBuilders: CalendarBuilders(
+                        markerBuilder: (context, day, events) {
+                          // 'events' here is the list of sessions for the day
+                          if (events.isNotEmpty) {
+                            return Positioned(
+                              right: 1,
+                              bottom: 1,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  shape: BoxShape.circle,
+                                ),
+                                width: 16.0,
+                                height: 16.0,
+                                child: Center(
+                                  child: Text(
+                                    '${events.length}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall!.copyWith(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSecondary,
+                                      fontSize: 10.0,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return null;
+                        },
+                      ),
+                      eventLoader:
+                          _getSessionsForDay, // Use the new method here
+                    );
                   },
                 ),
-                eventLoader: _getSessionsForDay, // Use the new method here
-              );
-            },
+                const Divider(), // Separator between calendar and filters
+                // Filters Area
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('Фильтры'),
+                ),
+                // Add more filter widgets here later
+              ],
+            ),
           ),
-          const Divider(), // Separator between calendar and list
-          // Session List Area
+          const VerticalDivider(width: 1), // Separator between columns
+          // Right Column: Session List Area
           Expanded(
             // Use Expanded to take remaining space
             child: BlocBuilder<ScheduleBloc, ScheduleState>(

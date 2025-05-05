@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart'; // Import material.dart for TimeOfDay
 // Keep these imports here as they are used in the 'part' files
 import 'package:rehabilitation_center_app/features/schedule/domain/entities/schedule_form_data.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart';
@@ -13,6 +14,8 @@ import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_sessions_for_day.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/update_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 
 part 'schedule_event.dart';
 part 'schedule_state.dart';
@@ -23,6 +26,9 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   final AddSession _addSession;
   final UpdateSession _updateSession;
   final DeleteSession _deleteSession;
+  final CheckRecurringSessionConflicts
+  _checkRecurringSessionConflicts; // Add new use case
+  final AddMultipleSessions _addMultipleSessions; // Add new use case
 
   // Храним текущую выбранную дату
   DateTime _selectedDate = DateTime.now();
@@ -33,18 +39,92 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     required AddSession addSession,
     required UpdateSession updateSession,
     required DeleteSession deleteSession,
-  })  : _getSessionsForDay = getSessionsForDay,
-        _getScheduleFormData = getScheduleFormData,
-        _addSession = addSession,
-        _updateSession = updateSession,
-        _deleteSession = deleteSession,
-        super(ScheduleInitial()) {
+    required CheckRecurringSessionConflicts
+    checkRecurringSessionConflicts, // Add to constructor
+    required AddMultipleSessions addMultipleSessions, // Add to constructor
+  }) : _getSessionsForDay = getSessionsForDay,
+       _getScheduleFormData = getScheduleFormData,
+       _addSession = addSession,
+       _updateSession = updateSession,
+       _deleteSession = deleteSession,
+       _checkRecurringSessionConflicts =
+           checkRecurringSessionConflicts, // Assign
+       _addMultipleSessions = addMultipleSessions, // Assign
+       super(ScheduleInitial()) {
     on<SelectedDateChanged>(_onSelectedDateChanged);
     on<LoadSessionsForDay>(_onLoadSessionsForDay);
     on<LoadScheduleFormData>(_onLoadScheduleFormData);
     on<AddNewSession>(_onAddNewSession);
     on<UpdateExistingSession>(_onUpdateExistingSession);
     on<DeleteExistingSession>(_onDeleteExistingSession);
+    on<AddRecurringSessions>(_onAddRecurringSessions); // Add new listener
+  }
+
+  // Handler for recurring sessions
+  Future<void> _onAddRecurringSessions(
+    AddRecurringSessions event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    emit(ScheduleAdding()); // Indicate loading
+
+    try {
+      final List<DateTime> sessionDates = [];
+      for (int i = 0; i < event.numberOfSessions; i++) {
+        // Calculate the date for each recurring session (add i weeks)
+        final recurringDate = event.startDate.add(Duration(days: 7 * i));
+        // Combine date with selected time of day
+        final sessionDateTime = DateTime(
+          recurringDate.year,
+          recurringDate.month,
+          recurringDate.day,
+          event.timeOfDay.hour,
+          event.timeOfDay.minute,
+        );
+        sessionDates.add(sessionDateTime);
+      }
+
+      // Check for conflicts using the use case
+      final List<DateTime> conflictingDates =
+          await _checkRecurringSessionConflicts(
+            sessionDates,
+            event.employeeId,
+            event.childId,
+            event.durationMinutes,
+          );
+
+      if (conflictingDates.isNotEmpty) {
+        // Emit a state indicating conflicts and the list of conflicting dates
+        emit(ScheduleRecurringConflict(conflictingDates));
+        // Do NOT reload sessions here, the dialog will handle user action
+      } else {
+        // No conflicts, proceed to add sessions
+        final List<Session> newSessions =
+            sessionDates.map((dateTime) {
+              return Session(
+                id: 0, // Placeholder ID
+                dateTime: dateTime,
+                employeeId: event.employeeId,
+                activityTypeId: event.activityTypeId,
+                childId: event.childId,
+                price: event.price,
+                duration: Duration(minutes: event.durationMinutes),
+              );
+            }).toList();
+
+        // Add multiple sessions using the use case
+        await _addMultipleSessions(newSessions);
+
+        emit(ScheduleAddSuccess()); // Indicate success
+        add(LoadSessionsForDay(_selectedDate)); // Reload sessions
+      }
+    } catch (e) {
+      emit(
+        ScheduleError(
+          'Ошибка при добавлении периодических сессий: ${e.toString()}',
+        ),
+      );
+      add(LoadSessionsForDay(_selectedDate)); // Reload sessions
+    }
   }
 
   Future<void> _onSelectedDateChanged(
@@ -126,7 +206,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     } catch (e) {
       emit(ScheduleError('Ошибка обновления сессии: ${e.toString()}'));
       // Reload sessions even after error to reflect current state
-      add(LoadSessionsForDay(_selectedDate)); 
+      add(LoadSessionsForDay(_selectedDate));
     }
   }
 

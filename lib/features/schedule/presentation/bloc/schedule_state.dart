@@ -1,4 +1,4 @@
-part of 'schedule_bloc.dart'; 
+part of 'schedule_bloc.dart';
 
 // Состояния для ScheduleBloc
 abstract class ScheduleState extends Equatable {
@@ -64,4 +64,14 @@ class ScheduleError extends ScheduleState {
 
   @override
   List<Object?> get props => [message];
+}
+
+// Состояние конфликта при добавлении периодических сессий
+class ScheduleRecurringConflict extends ScheduleState {
+  final List<DateTime> conflictingDates;
+
+  const ScheduleRecurringConflict(this.conflictingDates);
+
+  @override
+  List<Object?> get props => [conflictingDates];
 }

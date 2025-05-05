@@ -21,5 +21,18 @@ abstract class ScheduleRepository {
   Future<void> updateSession(Session session);
 
   // Удалить сессию по ID
-  Future<int> deleteSession(int sessionId); // Возвращает количество удаленных строк (0 или 1)
+  Future<int> deleteSession(
+    int sessionId,
+  ); // Возвращает количество удаленных строк (0 или 1)
+
+  // Проверить пересечения для периодических сессий
+  Future<List<DateTime>> checkRecurringSessionConflicts(
+    List<DateTime> sessionDates,
+    int employeeId,
+    int childId,
+    int durationMinutes,
+  );
+
+  // Добавить несколько сессий
+  Future<void> addMultipleSessions(List<Session> sessions);
 }

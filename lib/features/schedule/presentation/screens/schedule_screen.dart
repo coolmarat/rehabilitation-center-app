@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart'; // Для форматирования дат
 // Use the correct path for ActivityType
-import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart'; 
+import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart'; // <-- Re-import domain Session
@@ -239,12 +239,55 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                 );
                 // Оставляем диалог открытым, чтобы пользователь мог исправить данные
+              } else if (state is ScheduleRecurringConflict) {
+                // Показываем диалог с конфликтами
+                Navigator.of(
+                  dialogContext,
+                ).pop(); // Close the add session dialog
+                _showConflictDialog(
+                  context,
+                  state.conflictingDates,
+                ); // Show conflict dialog
               }
               // TODO: Можно добавить обновление barrierDismissible здесь, если нужно
             },
             // Передаем выбранную дату в сам виджет диалога
             child: _AddSessionDialogContent(selectedDate: selectedDate),
           ),
+        );
+      },
+    );
+  }
+
+  // Метод для показа диалога с конфликтами
+  void _showConflictDialog(
+    BuildContext context,
+    List<DateTime> conflictingDates,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Найдены пересечения в расписании'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children:
+                  conflictingDates
+                      .map(
+                        (date) =>
+                            Text(DateFormat('dd.MM.yyyy HH:mm').format(date)),
+                      )
+                      .toList(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('ОК'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Закрыть диалог
+              },
+            ),
+          ],
         );
       },
     );
@@ -356,17 +399,22 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
   int? _selectedChildId;
   TimeOfDay? _selectedTime;
   final _priceController = TextEditingController();
+  bool _isRecurring = false; // Добавляем флаг периодического занятия
+  final _numberOfSessionsController =
+      TextEditingController(); // Контроллер для количества занятий
 
   @override
   void initState() {
     super.initState();
     // Устанавливаем начальное время (например, 9:00)
     _selectedTime = const TimeOfDay(hour: 9, minute: 0);
+    _numberOfSessionsController.text = '1'; // Значение по умолчанию
   }
 
   @override
   void dispose() {
     _priceController.dispose();
+    _numberOfSessionsController.dispose(); // Освобождаем контроллер
     super.dispose();
   }
 
@@ -567,6 +615,37 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: const Text('Периодическое занятие'),
+                      value: _isRecurring,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _isRecurring = value ?? false;
+                        });
+                      },
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    if (_isRecurring)
+                      TextFormField(
+                        controller: _numberOfSessionsController,
+                        decoration: const InputDecoration(
+                          labelText: 'Количество занятий (каждую неделю)',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (_isRecurring) {
+                            if (value == null || value.isEmpty) {
+                              return 'Укажите количество занятий';
+                            }
+                            if (int.tryParse(value) == null ||
+                                int.parse(value) <= 0) {
+                              return 'Некорректное значение';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
                   ],
                 ),
               );
@@ -626,32 +705,71 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                             final priceString = _priceController.text
                                 .replaceAll(',', '.');
                             final price = double.parse(priceString);
-                            // Собираем дату и время
-                            final sessionDateTime = DateTime(
-                              widget.selectedDate.year,
-                              widget.selectedDate.month,
-                              widget.selectedDate.day,
-                              _selectedTime!.hour,
-                              _selectedTime!.minute,
-                            );
-
-                            // Отправляем событие добавления
                             final formData = currentState.formData;
                             final selectedActivity = formData.activityTypes
                                 .firstWhere(
                                   (a) => a.id == _selectedActivityTypeId,
                                 );
-                            BlocProvider.of<ScheduleBloc>(context).add(
-                              AddNewSession(
-                                dateTime: sessionDateTime,
-                                employeeId: _selectedEmployeeId!,
-                                activityTypeId: _selectedActivityTypeId!,
-                                childId: _selectedChildId!,
-                                price: price,
-                                durationMinutes:
-                                    selectedActivity.durationInMinutes,
-                              ),
-                            );
+                            final durationMinutes =
+                                selectedActivity.durationInMinutes;
+
+                            if (_isRecurring) {
+                              // Логика для добавления периодических занятий
+                              final numberOfSessions =
+                                  int.tryParse(
+                                    _numberOfSessionsController.text,
+                                  ) ??
+                                  0;
+                              if (numberOfSessions > 0) {
+                                // TODO: Implement recurring session creation and conflict check
+                                print(
+                                  'Adding $numberOfSessions recurring sessions starting from ${widget.selectedDate} at ${_selectedTime!.format(context)}',
+                                );
+                                // Dispatch the new AddRecurringSessions event
+                                BlocProvider.of<ScheduleBloc>(context).add(
+                                  AddRecurringSessions(
+                                    startDate: widget.selectedDate,
+                                    timeOfDay: _selectedTime!,
+                                    employeeId: _selectedEmployeeId!,
+                                    activityTypeId: _selectedActivityTypeId!,
+                                    childId: _selectedChildId!,
+                                    price: price,
+                                    durationMinutes: durationMinutes,
+                                    numberOfSessions: numberOfSessions,
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Укажите корректное количество занятий для периодического добавления.',
+                                    ),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              }
+                            } else {
+                              // Логика для добавления одиночного занятия
+                              final sessionDateTime = DateTime(
+                                widget.selectedDate.year,
+                                widget.selectedDate.month,
+                                widget.selectedDate.day,
+                                _selectedTime!.hour,
+                                _selectedTime!.minute,
+                              );
+
+                              // Отправляем событие добавления одиночной сессии
+                              BlocProvider.of<ScheduleBloc>(context).add(
+                                AddNewSession(
+                                  dateTime: sessionDateTime,
+                                  employeeId: _selectedEmployeeId!,
+                                  activityTypeId: _selectedActivityTypeId!,
+                                  childId: _selectedChildId!,
+                                  price: price,
+                                  durationMinutes: durationMinutes,
+                                ),
+                              );
+                            }
                           } else if (!isTimeSelected) {
                             // Информируем пользователя, если время не выбрано
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1071,7 +1189,8 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
   ) {
     if (selectedActivity != null) {
       _durationController.text =
-          selectedActivity.durationInMinutes.toString(); // <-- Use correct field name
+          selectedActivity.durationInMinutes
+              .toString(); // <-- Use correct field name
     } else {
       _durationController.clear();
     }
@@ -1141,25 +1260,25 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
 
       // Map SessionEntry to domain Session model
       final updatedDomainSession = Session(
-          id: updatedSessionEntry.id, // <-- Use 'id' instead of 'sessionId'
-          dateTime: updatedSessionEntry.sessionDateTime,
-          duration: Duration(minutes: updatedSessionEntry.durationMinutes),
-          price: updatedSessionEntry.price,
-          isCompleted: updatedSessionEntry.isCompleted,
-          notes: updatedSessionEntry.notes,
-          activityTypeId: updatedSessionEntry.activityTypeId,
-          employeeId: updatedSessionEntry.employeeId,
-          childId: updatedSessionEntry.childId,
-          // Note: Domain Session might not need relationship data here
-          // employeeName: '', // Fetch if needed by BLoC
-          // activityName: '', // Fetch if needed by BLoC
-          // childName: '',    // Fetch if needed by BLoC
-          );
+        id: updatedSessionEntry.id, // <-- Use 'id' instead of 'sessionId'
+        dateTime: updatedSessionEntry.sessionDateTime,
+        duration: Duration(minutes: updatedSessionEntry.durationMinutes),
+        price: updatedSessionEntry.price,
+        isCompleted: updatedSessionEntry.isCompleted,
+        notes: updatedSessionEntry.notes,
+        activityTypeId: updatedSessionEntry.activityTypeId,
+        employeeId: updatedSessionEntry.employeeId,
+        childId: updatedSessionEntry.childId,
+        // Note: Domain Session might not need relationship data here
+        // employeeName: '', // Fetch if needed by BLoC
+        // activityName: '', // Fetch if needed by BLoC
+        // childName: '',    // Fetch if needed by BLoC
+      );
 
       // Отправляем событие обновления в Bloc с Domain Session
-      BlocProvider.of<ScheduleBloc>(
-        context,
-      ).add(UpdateExistingSession(updatedDomainSession)); // <-- Pass domain Session
+      BlocProvider.of<ScheduleBloc>(context).add(
+        UpdateExistingSession(updatedDomainSession),
+      ); // <-- Pass domain Session
     }
   }
 }

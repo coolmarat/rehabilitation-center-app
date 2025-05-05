@@ -25,21 +25,22 @@ import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/update_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 // ----------------------------------
 
 // Сервис локатор
 final sl = GetIt.instance;
 
 Future<void> init() async {
-
   // --- Features - Employees ---
   // Bloc
   // Регистрируем как Factory, так как BLoC обычно имеет состояние и должен создаваться заново
   sl.registerFactory(
     () => EmployeeBloc(
-      getEmployees: sl(), 
-      addEmployee: sl(), 
-      updateEmployee: sl(), 
+      getEmployees: sl(),
+      addEmployee: sl(),
+      updateEmployee: sl(),
       deleteEmployee: sl(),
     ),
   );
@@ -79,7 +80,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => DeleteActivityType(sl()));
 
   // Repository
-  sl.registerLazySingleton<ActivityTypeRepository>(() => ActivityTypeRepositoryImpl(sl()));
+  sl.registerLazySingleton<ActivityTypeRepository>(
+    () => ActivityTypeRepositoryImpl(sl()),
+  );
 
   // --- Features - Schedule ---
   // Bloc
@@ -90,6 +93,8 @@ Future<void> init() async {
       addSession: sl(),
       updateSession: sl(),
       deleteSession: sl(),
+      checkRecurringSessionConflicts: sl(), // Provide the dependency
+      addMultipleSessions: sl(), // Provide the dependency
     ),
   );
 
@@ -99,6 +104,12 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddSession(sl()));
   sl.registerLazySingleton(() => UpdateSession(sl()));
   sl.registerLazySingleton(() => DeleteSession(sl()));
+  sl.registerLazySingleton(
+    () => CheckRecurringSessionConflicts(sl()),
+  ); // Register new use case
+  sl.registerLazySingleton(
+    () => AddMultipleSessions(sl()),
+  ); // Register new use case
 
   // Repository
   sl.registerLazySingleton<ScheduleRepository>(
@@ -111,7 +122,8 @@ Future<void> init() async {
   // Важно: этот экземпляр должен быть тем же, что используется в Provider в main.dart
   // Мы можем либо передать сюда существующий экземпляр, либо зарегистрировать его здесь
   // и получать из sl в main.dart. Выберем второй подход.
-  if (!sl.isRegistered<AppDatabase>()) { // Проверяем, не зарегистрирован ли уже
+  if (!sl.isRegistered<AppDatabase>()) {
+    // Проверяем, не зарегистрирован ли уже
     sl.registerSingleton<AppDatabase>(AppDatabase());
   }
 

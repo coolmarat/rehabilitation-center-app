@@ -49,7 +49,14 @@ class AddNewSession extends ScheduleEvent {
   });
 
   @override
-  List<Object> get props => [dateTime, employeeId, activityTypeId, childId, price, durationMinutes];
+  List<Object> get props => [
+    dateTime,
+    employeeId,
+    activityTypeId,
+    childId,
+    price,
+    durationMinutes,
+  ];
 }
 
 // Событие для обновления существующей сессии
@@ -70,4 +77,39 @@ class DeleteExistingSession extends ScheduleEvent {
 
   @override
   List<Object> get props => [sessionId];
+}
+
+// Событие для добавления периодических сессий
+class AddRecurringSessions extends ScheduleEvent {
+  final DateTime startDate;
+  final TimeOfDay timeOfDay;
+  final int employeeId;
+  final int activityTypeId;
+  final int childId;
+  final double price;
+  final int durationMinutes;
+  final int numberOfSessions;
+
+  const AddRecurringSessions({
+    required this.startDate,
+    required this.timeOfDay,
+    required this.employeeId,
+    required this.activityTypeId,
+    required this.childId,
+    required this.price,
+    required this.durationMinutes,
+    required this.numberOfSessions,
+  });
+
+  @override
+  List<Object> get props => [
+    startDate,
+    timeOfDay,
+    employeeId,
+    activityTypeId,
+    childId,
+    price,
+    durationMinutes,
+    numberOfSessions,
+  ];
 }

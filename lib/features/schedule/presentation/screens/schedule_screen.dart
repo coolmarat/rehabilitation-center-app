@@ -25,6 +25,8 @@ class ScheduleScreen extends StatefulWidget {
 class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  List<SessionDetails> _sessions =
+      []; // Добавляем переменную для хранения сессий
 
   @override
   void initState() {
@@ -119,6 +121,39 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
+                // Add markers for sessions
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (context, day, events) {
+                    // 'events' here is the list of sessions for the day
+                    if (events.isNotEmpty) {
+                      return Positioned(
+                        right: 1,
+                        bottom: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                          width: 16.0,
+                          height: 16.0,
+                          child: Center(
+                            child: Text(
+                              '${events.length}',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall!.copyWith(
+                                color:
+                                    Theme.of(context).colorScheme.onSecondary,
+                                fontSize: 10.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
               );
             },
           ),
@@ -128,69 +163,64 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             // Use Expanded to take remaining space
             child: BlocBuilder<ScheduleBloc, ScheduleState>(
               builder: (context, state) {
+                // Обновляем сохраненный список сессий, если состояние ScheduleLoaded
+                if (state is ScheduleLoaded) {
+                  _sessions = state.sessions;
+                }
+
                 if (state is ScheduleLoading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is ScheduleLoaded) {
-                  if (state.sessions.isEmpty) {
-                    return const Center(
-                      child: Text('Нет записей на выбранный день.'),
-                    );
-                  }
-                  // Build the list of sessions
-                  return ListView.builder(
-                    itemCount: state.sessions.length,
-                    itemBuilder: (context, index) {
-                      final session = state.sessions[index];
-                      // TODO: Replace with a proper SessionListTile widget
-                      return ListTile(
-                        title: Text(
-                          '${DateFormat('HH:mm').format(session.dateTime)} - ${session.activityTypeName}',
-                        ),
-                        subtitle: Text(
-                          'Клиент: ${session.childName}, Специалист: ${session.employeeName}',
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('${session.duration.inMinutes} мин'),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.redAccent,
-                              ),
-                              tooltip: 'Удалить сессию',
-                              onPressed: () {
-                                _showDeleteConfirmationDialog(
-                                  context,
-                                  session.sessionId,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          // Add null check for _selectedDay
-                          if (_selectedDay != null) {
-                            _showEditSessionDialog(
-                              context,
-                              session,
-                              _selectedDay!,
-                            );
-                          }
-                        },
-                      );
-                    },
-                  );
-                } else if (state is ScheduleError) {
-                  return Center(
-                    child: Text('Ошибка загрузки: ${state.message}'),
-                  );
-                } else {
-                  // Initial state or other unhandled states
+                } else if (_sessions.isEmpty) {
+                  // Если сохраненный список сессий пуст (и не в состоянии загрузки)
                   return const Center(
-                    child: Text('Выберите день для просмотра расписания.'),
+                    child: Text('Нет записей на выбранный день.'),
                   );
                 }
+                // Build the list of sessions using the saved list
+                return ListView.builder(
+                  itemCount: _sessions.length,
+                  itemBuilder: (context, index) {
+                    final session = _sessions[index];
+                    // TODO: Replace with a proper SessionListTile widget
+                    return ListTile(
+                      title: Text(
+                        '${DateFormat('HH:mm').format(session.dateTime)} - ${session.activityTypeName}',
+                      ),
+                      subtitle: Text(
+                        'Клиент: ${session.childName}, Специалист: ${session.employeeName}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${session.duration.inMinutes} мин'),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
+                            tooltip: 'Удалить сессию',
+                            onPressed: () {
+                              _showDeleteConfirmationDialog(
+                                context,
+                                session.sessionId,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        // Add null check for _selectedDay
+                        if (_selectedDay != null) {
+                          _showEditSessionDialog(
+                            context,
+                            session,
+                            _selectedDay!,
+                          );
+                        }
+                      },
+                    );
+                  },
+                );
               },
             ),
           ),

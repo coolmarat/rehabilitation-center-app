@@ -185,10 +185,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           if (!isSameDay(_selectedDay, selectedDay)) {
                             setState(() {
                               _selectedDay = selectedDay;
-                              _focusedDay =
-                                  focusedDay; // Update focused day as well
+                              _focusedDay = focusedDay;
+                              // Update _sessions immediately for the new day with current filters
+                              _sessions = _getSessionsForDay(selectedDay);
                             });
-                            // Trigger loading sessions for the newly selected day
+                            // Trigger loading sessions for the newly selected day from the source
                             BlocProvider.of<ScheduleBloc>(
                               context,
                             ).add(LoadSessionsForDay(selectedDay));
@@ -285,11 +286,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               handleSelected: (Employee selectedEmployee) {
                                 setState(() {
                                   _selectedEmployee = selectedEmployee;
+                                  if (_selectedDay != null) {
+                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                  }
                                 });
                               },
                               onClearSelected: () {
                                 setState(() {
                                   _selectedEmployee = null;
+                                  if (_selectedDay != null) {
+                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                  }
                                 });
                               },
                             ),
@@ -308,11 +315,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               handleSelected: (Child selectedChild) {
                                 setState(() {
                                   _selectedChild = selectedChild;
+                                  if (_selectedDay != null) {
+                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                  }
                                 });
                               },
                               onClearSelected: () {
                                 setState(() {
                                   _selectedChild = null;
+                                  if (_selectedDay != null) {
+                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                  }
                                 });
                               },
                             ),
@@ -328,10 +341,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               // Use Expanded to take remaining space
               child: BlocBuilder<ScheduleBloc, ScheduleState>(
                 builder: (context, state) {
-                  // Обновляем сохраненный список сессий, если состояние ScheduleLoaded
-                  if (state is ScheduleLoaded) {
-                    _sessions = state.sessions;
-                  }
+                  // _sessions is now managed by _onDaySelected and filter changes.
+                  // This BlocBuilder ensures UI rebuilds on ScheduleBloc state changes.
 
                   if (state is ScheduleLoading) {
                     return const Center(child: CircularProgressIndicator());

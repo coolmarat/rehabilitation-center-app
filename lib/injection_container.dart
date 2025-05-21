@@ -29,6 +29,20 @@ import 'package:rehabilitation_center_app/features/schedule/domain/usecases/chec
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 // ----------------------------------
 
+// --- Импорты для фичи Клиенты ---
+import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
+import 'package:rehabilitation_center_app/features/clients/data/repositories/client_repository_impl.dart';
+import 'package:rehabilitation_center_app/features/clients/data/datasources/client_local_data_source.dart';
+// ----------------------------------
+
 // Сервис локатор
 final sl = GetIt.instance;
 
@@ -128,4 +142,37 @@ Future<void> init() async {
   }
 
   // TODO: Добавить регистрацию зависимостей для других фич (Клиенты)
+
+  // --- Features - Clients ---
+  // Bloc
+  sl.registerFactory(
+    () => ClientBloc(
+      getParentsWithChildren: sl(),
+      addParent: sl(),
+      updateParent: sl(),
+      deleteParent: sl(),
+      addChild: sl(),
+      updateChild: sl(),
+      deleteChild: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetParentsWithChildren(sl()));
+  sl.registerLazySingleton(() => AddParent(sl()));
+  sl.registerLazySingleton(() => UpdateParent(sl()));
+  sl.registerLazySingleton(() => DeleteParent(sl()));
+  sl.registerLazySingleton(() => AddChild(sl()));
+  sl.registerLazySingleton(() => UpdateChild(sl()));
+  sl.registerLazySingleton(() => DeleteChild(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ClientRepository>(
+    () => ClientRepositoryImpl(localDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<ClientLocalDataSource>(
+    () => ClientLocalDataSourceImpl(database: sl()),
+  );
 }

@@ -8,11 +8,14 @@ import 'package:rehabilitation_center_app/features/activity_types/domain/activit
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart'; // <-- Re-import domain Session
+// Example imports for BLoCs - replace with your actual BLoC paths and names
+import 'package:rehabilitation_center_app/features/employees/presentation/bloc/employee_bloc.dart';
+import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
 import 'package:table_calendar/table_calendar.dart'; // <-- Correct import
+import 'package:rehabilitation_center_app/shared_widgets/filterable_dropdown.dart'; // For filter dropdowns
 import '../../../../core/database/app_database.dart'; // <-- Keep direct import
 // import '../../../../core/models/models.dart'; // <-- Removed, use specific domain models
-import '../../../../shared_widgets/filterable_dropdown.dart'; // <-- Corrected relative path
-import '../../domain/entities/session_details.dart'; // <-- Relative path
+import '../../domain/entities/session_details.dart'; // For SessionDetails
 import '../bloc/schedule_bloc.dart'; // <-- Keep only main BLoC import
 
 class ScheduleScreen extends StatefulWidget {
@@ -28,28 +31,53 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   List<SessionDetails> _sessions =
       []; // Добавляем переменную для хранения сессий
 
+  // Filter state variables
+  Employee? _selectedEmployee;
+  Child? _selectedChild;
+  List<Employee> _allEmployees = [];
+  List<Child> _allChildren = [];
+  bool _isLoadingEmployees = true;
+  bool _isLoadingClients = true;
+
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
     // Загрузка сессий для начального дня (уже делается в main.dart при создании Bloc)
     // BlocProvider.of<ScheduleBloc>(context).add(LoadSessionsForDay(_focusedDay));
+
+    // Fetch data for filters
+    // Ensure EmployeesBloc and ClientsBloc are provided above this widget in the tree
+    // And that they have appropriate events (e.g., LoadAllEmployeesEvent, LoadAllClientsEvent)
+    // and states (e.g., EmployeesLoaded, ClientsLoaded)
+    context.read<EmployeeBloc>().add(LoadEmployees()); // Replace with your actual event
+    context.read<ClientBloc>().add(LoadClients());       // Replace with your actual event
   }
 
   // Метод для получения сессий для конкретного дня
   List<SessionDetails> _getSessionsForDay(DateTime day) {
-    // Получаем текущее состояние Bloc
     final state = BlocProvider.of<ScheduleBloc>(context).state;
-    // Если состояние ScheduleLoaded, фильтруем сессии по дате из ВСЕХ загруженных сессий
     if (state is ScheduleLoaded) {
-      return state.allSessionsInView.where((session) {
-        // Используем state.allSessionsInView
-        // Используем state.allSessions
-        // Сравниваем только дату, игнорируя время
+      List<SessionDetails> sessionsForDay = state.allSessionsInView.where((session) {
         return isSameDay(session.dateTime, day);
       }).toList();
+
+      // Apply employee filter if an employee is selected
+      if (_selectedEmployee != null) {
+        sessionsForDay = sessionsForDay.where((session) {
+          return session.employeeId == _selectedEmployee!.id; // Ensure your SessionDetails has employeeId and Employee has id
+        }).toList();
+      }
+
+      // Apply child filter if a child is selected
+      if (_selectedChild != null) {
+        sessionsForDay = sessionsForDay.where((session) {
+          return session.childId == _selectedChild!.id; // Ensure your SessionDetails has childId and Child has id
+        }).toList();
+      }
+      
+      return sessionsForDay;
     }
-    // В противном случае возвращаем пустой список
     return [];
   }
 
@@ -68,203 +96,301 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         ],
       ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
-        children: [
-          // Left Column: Calendar and Filters
-          Expanded(
-            child: Column(
-              children: [
-                // Calendar Widget
-                BlocBuilder<ScheduleBloc, ScheduleState>(
-                  // Build the calendar only once, it doesn't need to rebuild on every state change
-                  // unless the selected/focused day logic depends heavily on the state itself.
-                  // For now, let's keep it simple.
-                  buildWhen:
-                      (previous, current) =>
-                          previous.runtimeType !=
-                          current
-                              .runtimeType, // Rebuild only on state type change if needed
-                  builder: (context, state) {
-                    // Use state.selectedDate if available, otherwise fallback to local state
-                    final currentSelectedDay =
-                        state is ScheduleLoaded
-                            ? state.selectedDate
-                            : _selectedDay;
-                    final currentFocusedDay =
-                        state is ScheduleLoaded
-                            ? state.selectedDate
-                            : _focusedDay; // Or keep _focusedDay
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<EmployeeBloc, EmployeeState>(
+            listener: (context, state) {
+              if (state is EmployeeLoading) {
+                setState(() {
+                  _isLoadingEmployees = true;
+                });
+              } else if (state is EmployeeLoaded) {
+                setState(() {
+                  _isLoadingEmployees = false;
+                  _allEmployees = state.employees;
+                });
+              } else if (state is EmployeeError) {
+                setState(() {
+                  _isLoadingEmployees = false;
+                  // Optionally, show an error message to the user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message)),
+                  );
+                });
+              }
+            },
+          ),
+          BlocListener<ClientBloc, ClientState>(
+            listener: (context, state) {
+              if (state.status == ClientStatus.loading) {
+                setState(() {
+                  _isLoadingClients = true;
+                });
+              } else if (state.status == ClientStatus.success) {
+                setState(() {
+                  _isLoadingClients = false;
+                  _allChildren = state.parentsWithChildren.values.expand((children) => children).toList();
+                });
+              } else if (state.status == ClientStatus.failure) {
+                setState(() {
+                  _isLoadingClients = false;
+                  // Optionally, show an error message to the user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.errorMessage ?? 'Неизвестная ошибка при загрузке клиентов')),
+                  );
+                });
+              }
+            },
+          ),
+        ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
+          children: [
+            // Left Column: Calendar and Filters
+            Expanded(
+              child: Column(
+                children: [
+                  // Calendar Widget
+                  BlocBuilder<ScheduleBloc, ScheduleState>(
+                    // Build the calendar only once, it doesn't need to rebuild on every state change
+                    // unless the selected/focused day logic depends heavily on the state itself.
+                    // For now, let's keep it simple.
+                    buildWhen:
+                        (previous, current) =>
+                            previous.runtimeType !=
+                            current
+                                .runtimeType, // Rebuild only on state type change if needed
+                    builder: (context, state) {
+                      // Use state.selectedDate if available, otherwise fallback to local state
+                      final currentSelectedDay =
+                          state is ScheduleLoaded
+                              ? state.selectedDate
+                              : _selectedDay;
+                      final currentFocusedDay =
+                          state is ScheduleLoaded
+                              ? state.selectedDate
+                              : _focusedDay; // Or keep _focusedDay
 
-                    return TableCalendar(
-                      locale: 'ru_RU', // Set locale if needed
-                      firstDay: DateTime.utc(2020, 1, 1),
-                      lastDay: DateTime.utc(2030, 12, 31),
-                      focusedDay:
-                          currentFocusedDay, // Use state's date or local _focusedDay
-                      selectedDayPredicate: (day) {
-                        // Use `isSameDay` to ignore time portion for selection
-                        return isSameDay(currentSelectedDay, day);
-                      },
-                      onDaySelected: (selectedDay, focusedDay) {
-                        if (!isSameDay(_selectedDay, selectedDay)) {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay =
-                                focusedDay; // Update focused day as well
-                          });
-                          // Trigger loading sessions for the newly selected day
-                          BlocProvider.of<ScheduleBloc>(
-                            context,
-                          ).add(LoadSessionsForDay(selectedDay));
-                        }
-                      },
-                      calendarFormat: CalendarFormat.month, // Or week, twoWeeks
-                      onPageChanged: (focusedDay) {
-                        // No need to call `setState()` here, `focusedDay` is handled internally
-                        // You might want to load data if your logic requires pre-fetching for pages
-                        _focusedDay =
-                            focusedDay; // Keep track of focused day if needed elsewhere
-                      },
-                      // Add other customizations as needed (header style, day builders, etc.)
-                      headerStyle: HeaderStyle(
-                        formatButtonVisible:
-                            false, // Hide format button if you only want month view
-                        titleCentered: true,
-                      ),
-                      calendarStyle: CalendarStyle(
-                        // Highlight today's date
-                        todayDecoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primaryContainer.withOpacity(0.5),
-                          shape: BoxShape.circle,
+                      return TableCalendar(
+                        locale: 'ru_RU', // Set locale if needed
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay:
+                            currentFocusedDay, // Use state's date or local _focusedDay
+                        selectedDayPredicate: (day) {
+                          // Use `isSameDay` to ignore time portion for selection
+                          return isSameDay(currentSelectedDay, day);
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          if (!isSameDay(_selectedDay, selectedDay)) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay =
+                                  focusedDay; // Update focused day as well
+                            });
+                            // Trigger loading sessions for the newly selected day
+                            BlocProvider.of<ScheduleBloc>(
+                              context,
+                            ).add(LoadSessionsForDay(selectedDay));
+                          }
+                        },
+                        calendarFormat: CalendarFormat.month, // Or week, twoWeeks
+                        onPageChanged: (focusedDay) {
+                          // No need to call `setState()` here, `focusedDay` is handled internally
+                          // You might want to load data if your logic requires pre-fetching for pages
+                          _focusedDay =
+                              focusedDay; // Keep track of focused day if needed elsewhere
+                        },
+                        // Add other customizations as needed (header style, day builders, etc.)
+                        headerStyle: HeaderStyle(
+                          formatButtonVisible:
+                              false, // Hide format button if you only want month view
+                          titleCentered: true,
                         ),
-                        // Highlight selected date
-                        selectedDecoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          shape: BoxShape.circle,
+                        calendarStyle: CalendarStyle(
+                          // Highlight today's date
+                          todayDecoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          // Highlight selected date
+                          selectedDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      // Add markers for sessions
-                      calendarBuilders: CalendarBuilders(
-                        markerBuilder: (context, day, events) {
-                          // 'events' here is the list of sessions for the day
-                          if (events.isNotEmpty) {
-                            return Positioned(
-                              right: 1,
-                              bottom: 1,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color:
-                                      Theme.of(context).colorScheme.secondary,
-                                  shape: BoxShape.circle,
-                                ),
-                                width: 16.0,
-                                height: 16.0,
-                                child: Center(
-                                  child: Text(
-                                    '${events.length}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall!.copyWith(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSecondary,
-                                      fontSize: 10.0,
+                        // Add markers for sessions
+                        calendarBuilders: CalendarBuilders(
+                          markerBuilder: (context, day, events) {
+                            // 'events' here is the list of sessions for the day
+                            if (events.isNotEmpty) {
+                              return Positioned(
+                                right: 1,
+                                bottom: 1,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  width: 16.0,
+                                  height: 16.0,
+                                  child: Center(
+                                    child: Text(
+                                      '${events.length}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall!.copyWith(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSecondary,
+                                        fontSize: 10.0,
+                                      ),
                                     ),
                                   ),
                                 ),
+                              );
+                            }
+                            return null;
+                          },
+                        ),
+                        eventLoader:
+                            _getSessionsForDay, // Use the new method here
+                      );
+                    },
+                  ),
+                  const Divider(), // Separator between calendar and filters
+                  // Filters Area
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Фильтры:', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 12.0),
+                        // Employee Filter
+                        Text('Специалист:', style: Theme.of(context).textTheme.titleSmall),
+                        const SizedBox(height: 8.0),
+                        _isLoadingEmployees
+                            ? const Center(child: CircularProgressIndicator())
+                            : FilterableDropdown<Employee>(
+                              hintText: 'Выберите специалиста',
+                              items: _allEmployees,
+                              initialItem: _selectedEmployee,
+                              getName: (Employee employee) => employee.fullName,
+                              getId: (Employee employee) => employee.id,
+                              handleSelected: (Employee selectedEmployee) {
+                                setState(() {
+                                  _selectedEmployee = selectedEmployee;
+                                });
+                              },
+                              onClearSelected: () {
+                                setState(() {
+                                  _selectedEmployee = null;
+                                });
+                              },
+                            ),
+                        const SizedBox(height: 16.0),
+                        // Child Filter
+                        Text('Клиент (ребенок):', style: Theme.of(context).textTheme.titleSmall),
+                        const SizedBox(height: 8.0),
+                        _isLoadingClients
+                            ? const Center(child: CircularProgressIndicator())
+                            : FilterableDropdown<Child>(
+                              hintText: 'Выберите ребенка',
+                              items: _allChildren,
+                              initialItem: _selectedChild,
+                              getName: (Child child) => child.fullName,
+                              getId: (Child child) => child.id,
+                              handleSelected: (Child selectedChild) {
+                                setState(() {
+                                  _selectedChild = selectedChild;
+                                });
+                              },
+                              onClearSelected: () {
+                                setState(() {
+                                  _selectedChild = null;
+                                });
+                              },
+                            ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const VerticalDivider(width: 1), // Separator between columns
+            // Right Column: Session List Area
+            Expanded(
+              // Use Expanded to take remaining space
+              child: BlocBuilder<ScheduleBloc, ScheduleState>(
+                builder: (context, state) {
+                  // Обновляем сохраненный список сессий, если состояние ScheduleLoaded
+                  if (state is ScheduleLoaded) {
+                    _sessions = state.sessions;
+                  }
+
+                  if (state is ScheduleLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (_sessions.isEmpty) {
+                    // Если сохраненный список сессий пуст (и не в состоянии загрузки)
+                    return const Center(
+                      child: Text('Нет записей на выбранный день.'),
+                    );
+                  }
+                  // Build the list of sessions using the saved list
+                  return ListView.builder(
+                    itemCount: _sessions.length,
+                    itemBuilder: (context, index) {
+                      final session = _sessions[index];
+                      // TODO: Replace with a proper SessionListTile widget
+                      return ListTile(
+                        title: Text(
+                          '${DateFormat('HH:mm').format(session.dateTime)} - ${session.activityTypeName}',
+                        ),
+                        subtitle: Text(
+                          'Клиент: ${session.childName}, Специалист: ${session.employeeName}',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('${session.duration.inMinutes} мин'),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
                               ),
+                              tooltip: 'Удалить сессию',
+                              onPressed: () {
+                                _showDeleteConfirmationDialog(
+                                  context,
+                                  session.sessionId,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          // Add null check for _selectedDay
+                          if (_selectedDay != null) {
+                            _showEditSessionDialog(
+                              context,
+                              session,
+                              _selectedDay!,
                             );
                           }
-                          return null;
                         },
-                      ),
-                      eventLoader:
-                          _getSessionsForDay, // Use the new method here
-                    );
-                  },
-                ),
-                const Divider(), // Separator between calendar and filters
-                // Filters Area
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('Фильтры'),
-                ),
-                // Add more filter widgets here later
-              ],
-            ),
-          ),
-          const VerticalDivider(width: 1), // Separator between columns
-          // Right Column: Session List Area
-          Expanded(
-            // Use Expanded to take remaining space
-            child: BlocBuilder<ScheduleBloc, ScheduleState>(
-              builder: (context, state) {
-                // Обновляем сохраненный список сессий, если состояние ScheduleLoaded
-                if (state is ScheduleLoaded) {
-                  _sessions = state.sessions;
-                }
-
-                if (state is ScheduleLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (_sessions.isEmpty) {
-                  // Если сохраненный список сессий пуст (и не в состоянии загрузки)
-                  return const Center(
-                    child: Text('Нет записей на выбранный день.'),
+                      );
+                    },
                   );
-                }
-                // Build the list of sessions using the saved list
-                return ListView.builder(
-                  itemCount: _sessions.length,
-                  itemBuilder: (context, index) {
-                    final session = _sessions[index];
-                    // TODO: Replace with a proper SessionListTile widget
-                    return ListTile(
-                      title: Text(
-                        '${DateFormat('HH:mm').format(session.dateTime)} - ${session.activityTypeName}',
-                      ),
-                      subtitle: Text(
-                        'Клиент: ${session.childName}, Специалист: ${session.employeeName}',
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('${session.duration.inMinutes} мин'),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
-                            ),
-                            tooltip: 'Удалить сессию',
-                            onPressed: () {
-                              _showDeleteConfirmationDialog(
-                                context,
-                                session.sessionId,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        // Add null check for _selectedDay
-                        if (_selectedDay != null) {
-                          _showEditSessionDialog(
-                            context,
-                            session,
-                            _selectedDay!,
-                          );
-                        }
-                      },
-                    );
-                  },
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

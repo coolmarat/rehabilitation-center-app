@@ -7,6 +7,7 @@ class FilterableDropdown<T> extends StatefulWidget {
   final void Function(T item) handleSelected;
   final String hintText;
   final T? initialItem;
+  final VoidCallback? onClearSelected;
 
   const FilterableDropdown({
     super.key,
@@ -16,6 +17,7 @@ class FilterableDropdown<T> extends StatefulWidget {
     required this.handleSelected,
     this.hintText = 'Search...', // Default hint text
     this.initialItem,
+    this.onClearSelected,
   });
 
   @override
@@ -160,19 +162,30 @@ class _FilterableDropdownState<T> extends State<FilterableDropdown<T>> {
         focusNode: _focusNode,
         decoration: InputDecoration(
           hintText: widget.hintText,
-          suffixIcon: IconButton(
-            icon: Icon(_isOverlayVisible ? Icons.arrow_drop_up : Icons.arrow_drop_down),
-            onPressed: () {
-              if (_isOverlayVisible) {
-                _removeOverlay();
-                _focusNode.unfocus();
-              } else {
-                if (_focusNode.hasFocus) _removeOverlay();
-                _focusNode.requestFocus();
-                if (!_isOverlayVisible) _showOverlay();
-              }
-            },
-          ),
+          suffixIcon: (_searchController.text.isNotEmpty && widget.onClearSelected != null)
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    widget.onClearSelected!();
+                    _searchController.clear();
+                    _onSearchChanged(); // To reset filtered items
+                    if (_isOverlayVisible) _removeOverlay();
+                    _focusNode.unfocus(); // Optionally unfocus
+                  },
+                )
+              : IconButton(
+                  icon: Icon(_isOverlayVisible ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+                  onPressed: () {
+                    if (_isOverlayVisible) {
+                      _removeOverlay();
+                      _focusNode.unfocus();
+                    } else {
+                      // if (_focusNode.hasFocus) _removeOverlay(); // Keep overlay if already focused and shown by text input
+                      _focusNode.requestFocus();
+                      if (!_isOverlayVisible) _showOverlay(); // Ensure overlay shows if not already visible
+                    }
+                  },
+                ),
         ),
       ),
     );

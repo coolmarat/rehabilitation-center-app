@@ -8,6 +8,7 @@ import 'package:rehabilitation_center_app/core/database/app_database.dart';
 import 'package:rehabilitation_center_app/injection_container.dart' as di; 
 import 'package:rehabilitation_center_app/features/employees/presentation/bloc/employee_bloc.dart'; 
 import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart';
+import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart'; // Import ClientBloc
 import 'package:flutter_localizations/flutter_localizations.dart'; 
 
 void main() async {
@@ -32,6 +33,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<ScheduleBloc>(
           create: (context) => di.sl<ScheduleBloc>()
             ..add(LoadSessionsForDay(DateTime.now())), // Загружаем сессии для сегодняшнего дня при старте
+        ),
+        BlocProvider<ClientBloc>(
+          create: (context) => di.sl<ClientBloc>()..add(LoadClients()), // Provide ClientBloc and load clients
         ),
         // TODO: Добавить провайдеры для других BLoC'ов
       ],

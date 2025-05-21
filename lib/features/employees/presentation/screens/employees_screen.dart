@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rehabilitation_center_app/features/employees/presentation/bloc/employee_bloc.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
+import 'package:rehabilitation_center_app/features/employees/presentation/bloc/employee_bloc.dart';
 
 // TODO: Импортировать сервис локатор или провайдеры для зависимостей
-// import 'package:rehabilitation_center_app/injection_container.dart'; 
+// import 'package:rehabilitation_center_app/injection_container.dart';
 
 class EmployeesScreen extends StatelessWidget {
   const EmployeesScreen({super.key});
@@ -32,34 +32,44 @@ class EmployeesScreen extends StatelessWidget {
       body: BlocConsumer<EmployeeBloc, EmployeeState>(
         listener: (context, state) {
           if (state is EmployeeError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Ошибка: ${state.message}')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Ошибка: ${state.message}')));
           }
           if (state is EmployeeOperationSuccess) {
-             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
           if (state is EmployeeInitial) {
-             // Запрашиваем загрузку данных
+            // Запрашиваем загрузку данных
             context.read<EmployeeBloc>().add(LoadEmployees());
-             // Показываем индикатор, пока идет переход к EmployeeLoading
-             return const Center(child: CircularProgressIndicator());
-           }
+            // Показываем индикатор, пока идет переход к EmployeeLoading
+            return const Center(child: CircularProgressIndicator());
+          }
           if (state is EmployeeLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is EmployeeLoaded) {
             if (state.employees.isEmpty) {
-              return const Center(child: Text('Нет сотрудников для отображения.'));
+              return const Center(
+                child: Text('Нет сотрудников для отображения.'),
+              );
             }
+            // Сортируем сотрудников по fullName
+            final sortedEmployees =
+                state.employees.toList()..sort(
+                  (a, b) => a.fullName.toLowerCase().compareTo(
+                    b.fullName.toLowerCase(),
+                  ),
+                );
+
             return ListView.builder(
-              itemCount: state.employees.length,
+              itemCount: sortedEmployees.length,
               itemBuilder: (context, index) {
-                final employee = state.employees[index];
+                final employee = sortedEmployees[index];
                 return ListTile(
                   title: Text(employee.fullName),
                   subtitle: Text(employee.position),
@@ -78,20 +88,26 @@ class EmployeesScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         tooltip: 'Удалить',
-                        onPressed: () async { // Делаем обработчик асинхронным
+                        onPressed: () async {
+                          // Делаем обработчик асинхронным
                           // Показываем диалог подтверждения
-                          final confirm = await _showDeleteConfirmationDialog(context, employee);
+                          final confirm = await _showDeleteConfirmationDialog(
+                            context,
+                            employee,
+                          );
                           if (confirm == true) {
-                             // Если подтверждено, отправляем событие на удаление
-                             context.read<EmployeeBloc>().add(DeleteEmployeeEvent(employee.id));
+                            // Если подтверждено, отправляем событие на удаление
+                            context.read<EmployeeBloc>().add(
+                              DeleteEmployeeEvent(employee.id),
+                            );
                           }
                         },
                       ),
                     ],
                   ),
                   onTap: () {
-                     // TODO: Возможно, переход на детальную карточку сотрудника
-                     print('Tapped on employee: ${employee.id}');
+                    // TODO: Возможно, переход на детальную карточку сотрудника
+                    print('Tapped on employee: ${employee.id}');
                   },
                 );
               },
@@ -101,14 +117,20 @@ class EmployeesScreen extends StatelessWidget {
           // if (state is EmployeeError) {
           //   return Center(child: Text('Ошибка: ${state.message}'));
           // }
-          return const Center(child: Text('Неизвестное состояние')); // Или EmployeeInitial
+          return const Center(
+            child: Text('Неизвестное состояние'),
+          ); // Или EmployeeInitial
         },
       ),
     );
   }
 
   // Функция для показа диалога добавления/редактирования сотрудника
-  Future<void> _showAddEmployeeDialog(BuildContext context, {Employee? employee}) async { // Добавляем необязательный параметр
+  Future<void> _showAddEmployeeDialog(
+    BuildContext context, {
+    Employee? employee,
+  }) async {
+    // Добавляем необязательный параметр
     final bloc = context.read<EmployeeBloc>(); // Получаем BLoC
     final formKey = GlobalKey<FormState>();
     // Определяем, это добавление или редактирование
@@ -118,7 +140,7 @@ class EmployeesScreen extends StatelessWidget {
     final positionController = TextEditingController();
 
     // Если редактируем, инициализируем контроллеры
-    if (isEditing) { 
+    if (isEditing) {
       fullNameController.text = employee.fullName;
       positionController.text = employee.position;
     }
@@ -128,7 +150,9 @@ class EmployeesScreen extends StatelessWidget {
       barrierDismissible: false, // Диалог нужно закрывать кнопками
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text(isEditing ? 'Редактировать сотрудника' : 'Добавить сотрудника'),
+          title: Text(
+            isEditing ? 'Редактировать сотрудника' : 'Добавить сотрудника',
+          ),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -197,18 +221,25 @@ class EmployeesScreen extends StatelessWidget {
   }
 
   // Диалог подтверждения удаления
-  Future<bool?> _showDeleteConfirmationDialog(BuildContext context, Employee employee) async {
+  Future<bool?> _showDeleteConfirmationDialog(
+    BuildContext context,
+    Employee employee,
+  ) async {
     return showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Подтверждение удаления'),
-          content: Text('Вы уверены, что хотите удалить сотрудника "${employee.fullName}"?'),
+          content: Text(
+            'Вы уверены, что хотите удалить сотрудника "${employee.fullName}"?',
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('Отмена'),
               onPressed: () {
-                Navigator.of(dialogContext).pop(false); // Возвращаем false при отмене
+                Navigator.of(
+                  dialogContext,
+                ).pop(false); // Возвращаем false при отмене
               },
             ),
             TextButton(
@@ -216,7 +247,9 @@ class EmployeesScreen extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Удалить'),
               onPressed: () {
-                 Navigator.of(dialogContext).pop(true); // Возвращаем true при подтверждении
+                Navigator.of(
+                  dialogContext,
+                ).pop(true); // Возвращаем true при подтверждении
               },
             ),
           ],

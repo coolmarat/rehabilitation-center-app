@@ -180,7 +180,27 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 key: ValueKey('${parent.id}_$shouldExpand'),
                                 // Устанавливаем начальное состояние разворота
                                 initiallyExpanded: shouldExpand,
-                                title: Text(parent.fullName),
+                                title: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        parent.fullName,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Text(
+                                        '${parent.balance.toStringAsFixed(2)} руб.',
+                                        style: TextStyle(
+                                          color: parent.balance < 0 ? Colors.redAccent : Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 subtitle: Text(parent.phoneNumber),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,

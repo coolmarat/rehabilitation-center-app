@@ -18,6 +18,7 @@ class ClientRepositoryImpl implements ClientRepository {
       phoneNumber: entry.phoneNumber,
       email: entry.email,
       address: entry.address,
+      balance: entry.balance,
     );
   }
 
@@ -28,6 +29,7 @@ class ClientRepositoryImpl implements ClientRepository {
       phoneNumber: Value(parent.phoneNumber),
       email: Value(parent.email),
       address: Value(parent.address),
+      balance: Value(parent.balance),
     );
   }
 
@@ -80,15 +82,8 @@ class ClientRepositoryImpl implements ClientRepository {
 
   @override
   Future<void> updateParent(Parent parent) async {
-    final entry = await localDataSource.getParentById(parent.id); // Получаем существующую запись
-    final updatedEntry = entry.copyWith( // Обновляем поля из parent
-      fullName: parent.fullName,
-      phoneNumber: parent.phoneNumber,
-      // Оборачиваем nullable поля в Value()
-      email: Value(parent.email),
-      address: Value(parent.address),
-    );
-    await localDataSource.updateParent(updatedEntry);
+    final companion = _mapParentToCompanion(parent);
+    await localDataSource.updateParent(companion);
   }
 
   @override
@@ -105,16 +100,8 @@ class ClientRepositoryImpl implements ClientRepository {
 
   @override
   Future<void> updateChild(Child child) async {
-    // Используем новый метод getChildById
-    final entry = await localDataSource.getChildById(child.id);
-    final updatedEntry = entry.copyWith(
-      fullName: child.fullName,
-      dateOfBirth: child.dateOfBirth,
-      // Оборачиваем nullable поле в Value()
-      diagnosis: Value(child.diagnosis),
-      // parentId не меняем при обновлении ребенка напрямую
-    );
-    await localDataSource.updateChild(updatedEntry);
+    final companion = _mapChildToCompanion(child);
+    await localDataSource.updateChild(companion);
   }
 
   @override
@@ -131,5 +118,17 @@ class ClientRepositoryImpl implements ClientRepository {
       result[parent] = children;
     }
     return result;
+  }
+
+  @override
+  Future<void> updateParentBalance(int parentId, double amount) async {
+    final parent = await getParentById(parentId);
+    final newBalance = parent.balance - amount;
+    await localDataSource.updateParentBalance(parentId, newBalance);
+  }
+
+  @override
+  Future<int> getParentIdByChildId(int childId) {
+    return localDataSource.getParentIdByChildId(childId);
   }
 }

@@ -12,14 +12,19 @@ import 'package:rehabilitation_center_app/features/clients/domain/usecases/delet
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_id_by_child_id.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
 
 // Список провайдеров для фичи Клиенты
 List<SingleChildWidget> clientProviders = [
-  // 1. DataSource
+  // 1. Dao и DataSource
+  Provider<ClientDao>(
+    create: (context) => ClientDao(context.read<AppDatabase>()),
+  ),
   Provider<ClientLocalDataSource>(
     create: (context) => ClientLocalDataSourceImpl(
-      database: context.read<AppDatabase>(), // Зависимость от AppDatabase
+      clientDao: context.read<ClientDao>(), // Зависимость от ClientDao
     ),
   ),
 
@@ -48,6 +53,12 @@ List<SingleChildWidget> clientProviders = [
   ),
   Provider<UpdateChild>(
     create: (context) => UpdateChild(context.read<ClientRepository>()),
+  ),
+  Provider<UpdateParentBalance>(
+    create: (context) => UpdateParentBalance(context.read<ClientRepository>()),
+  ),
+  Provider<GetParentIdByChildId>(
+    create: (context) => GetParentIdByChildId(context.read<ClientRepository>()),
   ),
   Provider<DeleteChild>(
     create: (context) => DeleteChild(context.read<ClientRepository>()),

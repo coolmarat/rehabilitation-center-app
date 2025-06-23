@@ -12,6 +12,8 @@ abstract class ClientRepository {
   Future<Child> addChild(Child child);
   Future<void> updateChild(Child child);
   Future<void> deleteChild(int id);
+  Future<void> updateParentBalance(int parentId, double amount);
+  Future<int> getParentIdByChildId(int childId);
 
   // Пример комбинированного метода:
   Future<Map<Parent, List<Child>>> getAllParentsWithChildren(); 

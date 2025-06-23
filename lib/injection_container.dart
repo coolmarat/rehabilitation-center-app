@@ -111,6 +111,8 @@ Future<void> init() async {
       checkRecurringSessionConflicts: sl(), // Provide the dependency
       addMultipleSessions: sl(), // Provide the dependency
       getClientSessionBalance: sl(),
+      getParentIdByChildId: sl(),
+      updateParentBalance: sl(),
     ),
   );
 
@@ -177,6 +179,6 @@ Future<void> init() async {
 
   // Data sources
   sl.registerLazySingleton<ClientLocalDataSource>(
-    () => ClientLocalDataSourceImpl(database: sl()),
+    () => ClientLocalDataSourceImpl(clientDao: sl()),
   );
 }

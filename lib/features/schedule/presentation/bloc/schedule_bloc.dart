@@ -17,6 +17,8 @@ import 'package:rehabilitation_center_app/features/schedule/domain/usecases/upda
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_id_by_child_id.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart' as gcsb;
 
 part 'schedule_event.dart';
@@ -31,6 +33,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   final CheckRecurringSessionConflicts _checkRecurringSessionConflicts;
   final AddMultipleSessions _addMultipleSessions;
   final gcsb.GetClientSessionBalance _getClientSessionBalance;
+  final GetParentIdByChildId _getParentIdByChildId;
+  final UpdateParentBalance _updateParentBalance;
 
   DateTime _selectedDate = DateTime.now();
 
@@ -43,6 +47,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     required CheckRecurringSessionConflicts checkRecurringSessionConflicts,
     required AddMultipleSessions addMultipleSessions,
     required gcsb.GetClientSessionBalance getClientSessionBalance,
+    required GetParentIdByChildId getParentIdByChildId,
+    required UpdateParentBalance updateParentBalance,
   })  : _getSessionsForDay = getSessionsForDay,
         _getScheduleFormData = getScheduleFormData,
         _addSession = addSession,
@@ -51,6 +57,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         _checkRecurringSessionConflicts = checkRecurringSessionConflicts,
         _addMultipleSessions = addMultipleSessions,
         _getClientSessionBalance = getClientSessionBalance,
+        _getParentIdByChildId = getParentIdByChildId,
+        _updateParentBalance = updateParentBalance,
         super(ScheduleInitial()) {
     on<SelectedDateChanged>(_onSelectedDateChanged);
     on<LoadSessionsForDay>(_onLoadSessionsForDay);
@@ -130,10 +138,19 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         duration: Duration(minutes: event.durationMinutes),
       );
       await _addSession(newSession);
+
+      // Списываем баланс, если цена больше нуля
+      if (event.price > 0) {
+        final parentId = await _getParentIdByChildId(event.childId);
+        await _updateParentBalance(
+            UpdateParentBalanceParams(parentId: parentId, amount: event.price));
+      }
+
       emit(ScheduleAddSuccess());
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
-      emit(ScheduleError('Ошибка добавления сессии: ${e.toString()}'));
+      emit(ScheduleError('Ошибка добавления сессии и списания баланса: ${e.toString()}'));
+      // Перезагружаем сессии, чтобы пользователь видел актуальное состояние, даже если списание не удалось
       add(LoadSessionsForDay(_selectedDate));
     }
   }

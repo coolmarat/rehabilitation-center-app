@@ -48,6 +48,7 @@ class _ParentFormDialogState extends State<ParentFormDialog> {
         phoneNumber: _phoneController.text,
         email: _emailController.text.isNotEmpty ? _emailController.text : null,
         address: _addressController.text.isNotEmpty ? _addressController.text : null,
+        balance: widget.parent?.balance ?? 0.0,
       );
 
       if (_isEditing) {

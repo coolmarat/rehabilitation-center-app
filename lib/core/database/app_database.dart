@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -63,6 +63,9 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(payments);
           await m.addColumn(sessions, sessions.isPaid);
           await m.addColumn(sessions, sessions.paymentId);
+        }
+        if (from < 6) {
+          await m.addColumn(parents, parents.balance);
         }
       },
     );

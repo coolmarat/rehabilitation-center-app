@@ -4,72 +4,57 @@ import 'package:rehabilitation_center_app/core/database/app_database.dart';
 abstract class ClientLocalDataSource {
   Future<List<ParentEntry>> getParents();
   Future<ParentEntry> getParentById(int id);
-  Future<List<ChildEntry>> getChildrenForParent(int parentId);
-  // Добавляем метод получения ребенка по ID
-  Future<ChildEntry> getChildById(int id);
   Future<int> addParent(ParentsCompanion parent);
-  Future<bool> updateParent(ParentEntry parent);
+  Future<bool> updateParent(ParentsCompanion parent);
   Future<int> deleteParent(int id);
+  Future<void> updateParentBalance(int parentId, double newBalance);
+  Future<int> getParentIdByChildId(int childId);
+
+  Future<List<ChildEntry>> getChildrenForParent(int parentId);
   Future<int> addChild(ChildrenCompanion child);
-  Future<bool> updateChild(ChildEntry child);
+  Future<bool> updateChild(ChildrenCompanion child);
   Future<int> deleteChild(int id);
 }
 
-// Реализация с использованием Drift
 class ClientLocalDataSourceImpl implements ClientLocalDataSource {
-  final AppDatabase database;
+  final ClientDao clientDao;
 
-  ClientLocalDataSourceImpl({required this.database});
-
-  @override
-  Future<List<ParentEntry>> getParents() async {
-    return await database.select(database.parents).get();
-  }
+  ClientLocalDataSourceImpl({required this.clientDao});
 
   @override
-  Future<ParentEntry> getParentById(int id) async {
-    return await (database.select(database.parents)..where((p) => p.id.equals(id))).getSingle();
-  }
+  Future<List<ParentEntry>> getParents() => clientDao.getAllParents();
 
   @override
-  Future<List<ChildEntry>> getChildrenForParent(int parentId) async {
-    return await (database.select(database.children)..where((c) => c.parentId.equals(parentId))).get();
-  }
+  Future<ParentEntry> getParentById(int id) => clientDao.getParentById(id);
 
   @override
-  Future<ChildEntry> getChildById(int id) async {
-    return await (database.select(database.children)..where((c) => c.id.equals(id))).getSingle();
-  }
+  Future<int> addParent(ParentsCompanion parent) => clientDao.addParent(parent);
 
   @override
-  Future<int> addParent(ParentsCompanion parent) async {
-    // Drift автоматически создает Companion для вставки/обновления
-    return await database.into(database.parents).insert(parent);
-  }
+  Future<bool> updateParent(ParentsCompanion parent) => clientDao.updateParent(parent);
 
   @override
-  Future<bool> updateParent(ParentEntry parent) async {
-    return await database.update(database.parents).replace(parent);
-  }
+  Future<int> deleteParent(int id) => clientDao.deleteParent(id);
 
   @override
-  Future<int> deleteParent(int id) async {
-    // Drift автоматически удалит связанных детей благодаря onDelete: KeyAction.cascade
-    return await (database.delete(database.parents)..where((p) => p.id.equals(id))).go();
-  }
+  Future<void> updateParentBalance(int parentId, double newBalance) =>
+      clientDao.updateParentBalance(parentId, newBalance);
 
   @override
-  Future<int> addChild(ChildrenCompanion child) async {
-    return await database.into(database.children).insert(child);
-  }
+  Future<int> getParentIdByChildId(int childId) => clientDao.getParentIdByChildId(childId);
 
   @override
-  Future<bool> updateChild(ChildEntry child) async {
-    return await database.update(database.children).replace(child);
-  }
+  Future<List<ChildEntry>> getChildrenForParent(int parentId) =>
+      clientDao.getChildrenForParent(parentId);
 
   @override
-  Future<int> deleteChild(int id) async {
-    return await (database.delete(database.children)..where((c) => c.id.equals(id))).go();
-  }
+  Future<int> addChild(ChildrenCompanion child) => clientDao.addChild(child);
+
+  @override
+  Future<bool> updateChild(ChildrenCompanion child) => clientDao.updateChild(child);
+
+  @override
+  Future<int> deleteChild(int id) => clientDao.deleteChild(id);
 }
+
+

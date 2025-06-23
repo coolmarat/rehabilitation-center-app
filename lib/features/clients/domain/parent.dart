@@ -6,6 +6,7 @@ class Parent extends Equatable {
   final String phoneNumber;
   final String? email; // Опциональное поле
   final String? address; // Опциональное поле
+  final double balance;
 
   const Parent({
     required this.id,
@@ -13,11 +14,12 @@ class Parent extends Equatable {
     required this.phoneNumber,
     this.email,
     this.address,
+    required this.balance,
   });
 
   // Equatable для сравнения объектов
   @override
-  List<Object?> get props => [id, fullName, phoneNumber, email, address];
+  List<Object?> get props => [id, fullName, phoneNumber, email, address, balance];
 
   // Метод copyWith для удобного создания копий с измененными полями
   Parent copyWith({
@@ -26,6 +28,7 @@ class Parent extends Equatable {
     String? phoneNumber,
     String? email,
     String? address,
+    double? balance,
   }) {
     return Parent(
       id: id ?? this.id,
@@ -33,6 +36,7 @@ class Parent extends Equatable {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
       address: address ?? this.address,
+      balance: balance ?? this.balance,
     );
   }
 }

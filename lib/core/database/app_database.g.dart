@@ -67,6 +67,18 @@ class $ParentsTable extends Parents with TableInfo<$ParentsTable, ParentEntry> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _balanceMeta = const VerificationMeta(
+    'balance',
+  );
+  @override
+  late final GeneratedColumn<double> balance = GeneratedColumn<double>(
+    'balance',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -74,6 +86,7 @@ class $ParentsTable extends Parents with TableInfo<$ParentsTable, ParentEntry> {
     phoneNumber,
     email,
     address,
+    balance,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -121,6 +134,12 @@ class $ParentsTable extends Parents with TableInfo<$ParentsTable, ParentEntry> {
         address.isAcceptableOrUnknown(data['address']!, _addressMeta),
       );
     }
+    if (data.containsKey('balance')) {
+      context.handle(
+        _balanceMeta,
+        balance.isAcceptableOrUnknown(data['balance']!, _balanceMeta),
+      );
+    }
     return context;
   }
 
@@ -153,6 +172,11 @@ class $ParentsTable extends Parents with TableInfo<$ParentsTable, ParentEntry> {
         DriftSqlType.string,
         data['${effectivePrefix}address'],
       ),
+      balance:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}balance'],
+          )!,
     );
   }
 
@@ -168,12 +192,14 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
   final String phoneNumber;
   final String? email;
   final String? address;
+  final double balance;
   const ParentEntry({
     required this.id,
     required this.fullName,
     required this.phoneNumber,
     this.email,
     this.address,
+    required this.balance,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -187,6 +213,7 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
     if (!nullToAbsent || address != null) {
       map['address'] = Variable<String>(address);
     }
+    map['balance'] = Variable<double>(balance);
     return map;
   }
 
@@ -201,6 +228,7 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
           address == null && nullToAbsent
               ? const Value.absent()
               : Value(address),
+      balance: Value(balance),
     );
   }
 
@@ -215,6 +243,7 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
       phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
       email: serializer.fromJson<String?>(json['email']),
       address: serializer.fromJson<String?>(json['address']),
+      balance: serializer.fromJson<double>(json['balance']),
     );
   }
   @override
@@ -226,6 +255,7 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
       'phoneNumber': serializer.toJson<String>(phoneNumber),
       'email': serializer.toJson<String?>(email),
       'address': serializer.toJson<String?>(address),
+      'balance': serializer.toJson<double>(balance),
     };
   }
 
@@ -235,12 +265,14 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
     String? phoneNumber,
     Value<String?> email = const Value.absent(),
     Value<String?> address = const Value.absent(),
+    double? balance,
   }) => ParentEntry(
     id: id ?? this.id,
     fullName: fullName ?? this.fullName,
     phoneNumber: phoneNumber ?? this.phoneNumber,
     email: email.present ? email.value : this.email,
     address: address.present ? address.value : this.address,
+    balance: balance ?? this.balance,
   );
   ParentEntry copyWithCompanion(ParentsCompanion data) {
     return ParentEntry(
@@ -250,6 +282,7 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
           data.phoneNumber.present ? data.phoneNumber.value : this.phoneNumber,
       email: data.email.present ? data.email.value : this.email,
       address: data.address.present ? data.address.value : this.address,
+      balance: data.balance.present ? data.balance.value : this.balance,
     );
   }
 
@@ -260,13 +293,15 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
           ..write('fullName: $fullName, ')
           ..write('phoneNumber: $phoneNumber, ')
           ..write('email: $email, ')
-          ..write('address: $address')
+          ..write('address: $address, ')
+          ..write('balance: $balance')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, fullName, phoneNumber, email, address);
+  int get hashCode =>
+      Object.hash(id, fullName, phoneNumber, email, address, balance);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -275,7 +310,8 @@ class ParentEntry extends DataClass implements Insertable<ParentEntry> {
           other.fullName == this.fullName &&
           other.phoneNumber == this.phoneNumber &&
           other.email == this.email &&
-          other.address == this.address);
+          other.address == this.address &&
+          other.balance == this.balance);
 }
 
 class ParentsCompanion extends UpdateCompanion<ParentEntry> {
@@ -284,12 +320,14 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
   final Value<String> phoneNumber;
   final Value<String?> email;
   final Value<String?> address;
+  final Value<double> balance;
   const ParentsCompanion({
     this.id = const Value.absent(),
     this.fullName = const Value.absent(),
     this.phoneNumber = const Value.absent(),
     this.email = const Value.absent(),
     this.address = const Value.absent(),
+    this.balance = const Value.absent(),
   });
   ParentsCompanion.insert({
     this.id = const Value.absent(),
@@ -297,6 +335,7 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
     required String phoneNumber,
     this.email = const Value.absent(),
     this.address = const Value.absent(),
+    this.balance = const Value.absent(),
   }) : fullName = Value(fullName),
        phoneNumber = Value(phoneNumber);
   static Insertable<ParentEntry> custom({
@@ -305,6 +344,7 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
     Expression<String>? phoneNumber,
     Expression<String>? email,
     Expression<String>? address,
+    Expression<double>? balance,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -312,6 +352,7 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
       if (phoneNumber != null) 'phone_number': phoneNumber,
       if (email != null) 'email': email,
       if (address != null) 'address': address,
+      if (balance != null) 'balance': balance,
     });
   }
 
@@ -321,6 +362,7 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
     Value<String>? phoneNumber,
     Value<String?>? email,
     Value<String?>? address,
+    Value<double>? balance,
   }) {
     return ParentsCompanion(
       id: id ?? this.id,
@@ -328,6 +370,7 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
       address: address ?? this.address,
+      balance: balance ?? this.balance,
     );
   }
 
@@ -349,6 +392,9 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
     if (address.present) {
       map['address'] = Variable<String>(address.value);
     }
+    if (balance.present) {
+      map['balance'] = Variable<double>(balance.value);
+    }
     return map;
   }
 
@@ -359,7 +405,8 @@ class ParentsCompanion extends UpdateCompanion<ParentEntry> {
           ..write('fullName: $fullName, ')
           ..write('phoneNumber: $phoneNumber, ')
           ..write('email: $email, ')
-          ..write('address: $address')
+          ..write('address: $address, ')
+          ..write('balance: $balance')
           ..write(')'))
         .toString();
   }
@@ -2570,6 +2617,7 @@ typedef $$ParentsTableCreateCompanionBuilder =
       required String phoneNumber,
       Value<String?> email,
       Value<String?> address,
+      Value<double> balance,
     });
 typedef $$ParentsTableUpdateCompanionBuilder =
     ParentsCompanion Function({
@@ -2578,6 +2626,7 @@ typedef $$ParentsTableUpdateCompanionBuilder =
       Value<String> phoneNumber,
       Value<String?> email,
       Value<String?> address,
+      Value<double> balance,
     });
 
 final class $$ParentsTableReferences
@@ -2634,6 +2683,11 @@ class $$ParentsTableFilterComposer
 
   ColumnFilters<String> get address => $composableBuilder(
     column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get balance => $composableBuilder(
+    column: $table.balance,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2696,6 +2750,11 @@ class $$ParentsTableOrderingComposer
     column: $table.address,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get balance => $composableBuilder(
+    column: $table.balance,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ParentsTableAnnotationComposer
@@ -2723,6 +2782,9 @@ class $$ParentsTableAnnotationComposer
 
   GeneratedColumn<String> get address =>
       $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<double> get balance =>
+      $composableBuilder(column: $table.balance, builder: (column) => column);
 
   Expression<T> childrenRefs<T extends Object>(
     Expression<T> Function($$ChildrenTableAnnotationComposer a) f,
@@ -2783,12 +2845,14 @@ class $$ParentsTableTableManager
                 Value<String> phoneNumber = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> address = const Value.absent(),
+                Value<double> balance = const Value.absent(),
               }) => ParentsCompanion(
                 id: id,
                 fullName: fullName,
                 phoneNumber: phoneNumber,
                 email: email,
                 address: address,
+                balance: balance,
               ),
           createCompanionCallback:
               ({
@@ -2797,12 +2861,14 @@ class $$ParentsTableTableManager
                 required String phoneNumber,
                 Value<String?> email = const Value.absent(),
                 Value<String?> address = const Value.absent(),
+                Value<double> balance = const Value.absent(),
               }) => ParentsCompanion.insert(
                 id: id,
                 fullName: fullName,
                 phoneNumber: phoneNumber,
                 email: email,
                 address: address,
+                balance: balance,
               ),
           withReferenceMapper:
               (p0) =>

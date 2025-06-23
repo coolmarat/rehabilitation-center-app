@@ -9,4 +9,5 @@ class Parents extends Table {
   TextColumn get email => text().nullable()();
   // Добавляем address
   TextColumn get address => text().nullable()(); 
+  RealColumn get balance => real().withDefault(const Constant(0.0))(); 
 }

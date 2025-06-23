@@ -71,6 +71,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
             icon: const Icon(Icons.clear),
             onPressed: () {
               _searchController.clear();
+              context.read<ClientBloc>().add(SearchQueryChanged(''));
             },
           ),
         ],

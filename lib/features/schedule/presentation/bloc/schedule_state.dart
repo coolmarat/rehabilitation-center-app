@@ -37,11 +37,29 @@ class ScheduleFormDataLoading extends ScheduleState {}
 // Состояние успешной загрузки данных для формы
 class ScheduleFormDataLoaded extends ScheduleState {
   final ScheduleFormData formData;
+  final int? clientSessionBalance;
+  final bool isBalanceLoading;
 
-  const ScheduleFormDataLoaded(this.formData);
+  const ScheduleFormDataLoaded({
+    required this.formData,
+    this.clientSessionBalance,
+    this.isBalanceLoading = false,
+  });
+
+  ScheduleFormDataLoaded copyWith({
+    ScheduleFormData? formData,
+    int? clientSessionBalance,
+    bool? isBalanceLoading,
+  }) {
+    return ScheduleFormDataLoaded(
+      formData: formData ?? this.formData,
+      clientSessionBalance: clientSessionBalance ?? this.clientSessionBalance,
+      isBalanceLoading: isBalanceLoading ?? this.isBalanceLoading,
+    );
+  }
 
   @override
-  List<Object?> get props => [formData];
+  List<Object?> get props => [formData, clientSessionBalance, isBalanceLoading];
 }
 
 // Состояние процесса добавления сессии

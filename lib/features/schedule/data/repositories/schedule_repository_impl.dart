@@ -26,8 +26,9 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       employeeId: session.employeeId,
       childId: session.childId,
       sessionDateTime: session.dateTime, // Use raw value for non-nullable
-      durationMinutes:
-          session.duration.inMinutes, // Use raw value for non-nullable
+      durationMinutes: Value<int>(
+        session.duration.inMinutes,
+      ), // Use raw value for non-nullable
       price: session.price, // Use raw value for non-nullable
       isCompleted: Value(
         session.isCompleted,
@@ -100,6 +101,12 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       activityTypes: activityTypes,
       children: children,
     );
+  }
+
+  @override
+  Future<int> getClientSessionBalance(int clientId) async {
+    // Напрямую вызываем метод из DAO, так как репозиторий имеет доступ к базе данных
+    return await _database.paymentDao.getClientSessionBalance(clientId);
   }
 
   @override
@@ -241,7 +248,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
           employeeId: session.employeeId,
           childId: session.childId,
           sessionDateTime: session.dateTime,
-          durationMinutes: session.duration.inMinutes,
+          durationMinutes: Value<int>(session.duration.inMinutes),
           price: session.price,
           isCompleted: Value(session.isCompleted),
           notes:

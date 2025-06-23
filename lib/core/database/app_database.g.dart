@@ -3,268 +3,6 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $EmployeesTable extends Employees
-    with TableInfo<$EmployeesTable, EmployeeEntry> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $EmployeesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _fullNameMeta = const VerificationMeta(
-    'fullName',
-  );
-  @override
-  late final GeneratedColumn<String> fullName = GeneratedColumn<String>(
-    'full_name',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 100,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _positionMeta = const VerificationMeta(
-    'position',
-  );
-  @override
-  late final GeneratedColumn<String> position = GeneratedColumn<String>(
-    'position',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 50,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [id, fullName, position];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'employees';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<EmployeeEntry> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('full_name')) {
-      context.handle(
-        _fullNameMeta,
-        fullName.isAcceptableOrUnknown(data['full_name']!, _fullNameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_fullNameMeta);
-    }
-    if (data.containsKey('position')) {
-      context.handle(
-        _positionMeta,
-        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_positionMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  EmployeeEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return EmployeeEntry(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      fullName:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}full_name'],
-          )!,
-      position:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}position'],
-          )!,
-    );
-  }
-
-  @override
-  $EmployeesTable createAlias(String alias) {
-    return $EmployeesTable(attachedDatabase, alias);
-  }
-}
-
-class EmployeeEntry extends DataClass implements Insertable<EmployeeEntry> {
-  final int id;
-  final String fullName;
-  final String position;
-  const EmployeeEntry({
-    required this.id,
-    required this.fullName,
-    required this.position,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['full_name'] = Variable<String>(fullName);
-    map['position'] = Variable<String>(position);
-    return map;
-  }
-
-  EmployeesCompanion toCompanion(bool nullToAbsent) {
-    return EmployeesCompanion(
-      id: Value(id),
-      fullName: Value(fullName),
-      position: Value(position),
-    );
-  }
-
-  factory EmployeeEntry.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return EmployeeEntry(
-      id: serializer.fromJson<int>(json['id']),
-      fullName: serializer.fromJson<String>(json['fullName']),
-      position: serializer.fromJson<String>(json['position']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'fullName': serializer.toJson<String>(fullName),
-      'position': serializer.toJson<String>(position),
-    };
-  }
-
-  EmployeeEntry copyWith({int? id, String? fullName, String? position}) =>
-      EmployeeEntry(
-        id: id ?? this.id,
-        fullName: fullName ?? this.fullName,
-        position: position ?? this.position,
-      );
-  EmployeeEntry copyWithCompanion(EmployeesCompanion data) {
-    return EmployeeEntry(
-      id: data.id.present ? data.id.value : this.id,
-      fullName: data.fullName.present ? data.fullName.value : this.fullName,
-      position: data.position.present ? data.position.value : this.position,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('EmployeeEntry(')
-          ..write('id: $id, ')
-          ..write('fullName: $fullName, ')
-          ..write('position: $position')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, fullName, position);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is EmployeeEntry &&
-          other.id == this.id &&
-          other.fullName == this.fullName &&
-          other.position == this.position);
-}
-
-class EmployeesCompanion extends UpdateCompanion<EmployeeEntry> {
-  final Value<int> id;
-  final Value<String> fullName;
-  final Value<String> position;
-  const EmployeesCompanion({
-    this.id = const Value.absent(),
-    this.fullName = const Value.absent(),
-    this.position = const Value.absent(),
-  });
-  EmployeesCompanion.insert({
-    this.id = const Value.absent(),
-    required String fullName,
-    required String position,
-  }) : fullName = Value(fullName),
-       position = Value(position);
-  static Insertable<EmployeeEntry> custom({
-    Expression<int>? id,
-    Expression<String>? fullName,
-    Expression<String>? position,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (fullName != null) 'full_name': fullName,
-      if (position != null) 'position': position,
-    });
-  }
-
-  EmployeesCompanion copyWith({
-    Value<int>? id,
-    Value<String>? fullName,
-    Value<String>? position,
-  }) {
-    return EmployeesCompanion(
-      id: id ?? this.id,
-      fullName: fullName ?? this.fullName,
-      position: position ?? this.position,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (fullName.present) {
-      map['full_name'] = Variable<String>(fullName.value);
-    }
-    if (position.present) {
-      map['position'] = Variable<String>(position.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('EmployeesCompanion(')
-          ..write('id: $id, ')
-          ..write('fullName: $fullName, ')
-          ..write('position: $position')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $ParentsTable extends Parents with TableInfo<$ParentsTable, ParentEntry> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -997,6 +735,268 @@ class ChildrenCompanion extends UpdateCompanion<ChildEntry> {
   }
 }
 
+class $EmployeesTable extends Employees
+    with TableInfo<$EmployeesTable, EmployeeEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EmployeesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _fullNameMeta = const VerificationMeta(
+    'fullName',
+  );
+  @override
+  late final GeneratedColumn<String> fullName = GeneratedColumn<String>(
+    'full_name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<String> position = GeneratedColumn<String>(
+    'position',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, fullName, position];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'employees';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EmployeeEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('full_name')) {
+      context.handle(
+        _fullNameMeta,
+        fullName.isAcceptableOrUnknown(data['full_name']!, _fullNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fullNameMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EmployeeEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EmployeeEntry(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      fullName:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}full_name'],
+          )!,
+      position:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}position'],
+          )!,
+    );
+  }
+
+  @override
+  $EmployeesTable createAlias(String alias) {
+    return $EmployeesTable(attachedDatabase, alias);
+  }
+}
+
+class EmployeeEntry extends DataClass implements Insertable<EmployeeEntry> {
+  final int id;
+  final String fullName;
+  final String position;
+  const EmployeeEntry({
+    required this.id,
+    required this.fullName,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['full_name'] = Variable<String>(fullName);
+    map['position'] = Variable<String>(position);
+    return map;
+  }
+
+  EmployeesCompanion toCompanion(bool nullToAbsent) {
+    return EmployeesCompanion(
+      id: Value(id),
+      fullName: Value(fullName),
+      position: Value(position),
+    );
+  }
+
+  factory EmployeeEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EmployeeEntry(
+      id: serializer.fromJson<int>(json['id']),
+      fullName: serializer.fromJson<String>(json['fullName']),
+      position: serializer.fromJson<String>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'fullName': serializer.toJson<String>(fullName),
+      'position': serializer.toJson<String>(position),
+    };
+  }
+
+  EmployeeEntry copyWith({int? id, String? fullName, String? position}) =>
+      EmployeeEntry(
+        id: id ?? this.id,
+        fullName: fullName ?? this.fullName,
+        position: position ?? this.position,
+      );
+  EmployeeEntry copyWithCompanion(EmployeesCompanion data) {
+    return EmployeeEntry(
+      id: data.id.present ? data.id.value : this.id,
+      fullName: data.fullName.present ? data.fullName.value : this.fullName,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EmployeeEntry(')
+          ..write('id: $id, ')
+          ..write('fullName: $fullName, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, fullName, position);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EmployeeEntry &&
+          other.id == this.id &&
+          other.fullName == this.fullName &&
+          other.position == this.position);
+}
+
+class EmployeesCompanion extends UpdateCompanion<EmployeeEntry> {
+  final Value<int> id;
+  final Value<String> fullName;
+  final Value<String> position;
+  const EmployeesCompanion({
+    this.id = const Value.absent(),
+    this.fullName = const Value.absent(),
+    this.position = const Value.absent(),
+  });
+  EmployeesCompanion.insert({
+    this.id = const Value.absent(),
+    required String fullName,
+    required String position,
+  }) : fullName = Value(fullName),
+       position = Value(position);
+  static Insertable<EmployeeEntry> custom({
+    Expression<int>? id,
+    Expression<String>? fullName,
+    Expression<String>? position,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (fullName != null) 'full_name': fullName,
+      if (position != null) 'position': position,
+    });
+  }
+
+  EmployeesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? fullName,
+    Value<String>? position,
+  }) {
+    return EmployeesCompanion(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      position: position ?? this.position,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (fullName.present) {
+      map['full_name'] = Variable<String>(fullName.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<String>(position.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EmployeesCompanion(')
+          ..write('id: $id, ')
+          ..write('fullName: $fullName, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ActivityTypesTable extends ActivityTypes
     with TableInfo<$ActivityTypesTable, ActivityTypeEntry> {
   @override
@@ -1372,8 +1372,7 @@ class ActivityTypesCompanion extends UpdateCompanion<ActivityTypeEntry> {
   }
 }
 
-class $SessionsTable extends Sessions
-    with TableInfo<$SessionsTable, SessionEntry> {
+class $SessionsTable extends Sessions with TableInfo<$SessionsTable, Session> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1391,6 +1390,42 @@ class $SessionsTable extends Sessions
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _childIdMeta = const VerificationMeta(
+    'childId',
+  );
+  @override
+  late final GeneratedColumn<int> childId = GeneratedColumn<int>(
+    'child_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'REFERENCES children(id)',
+  );
+  static const VerificationMeta _employeeIdMeta = const VerificationMeta(
+    'employeeId',
+  );
+  @override
+  late final GeneratedColumn<int> employeeId = GeneratedColumn<int>(
+    'employee_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'REFERENCES employees(id)',
+  );
+  static const VerificationMeta _activityTypeIdMeta = const VerificationMeta(
+    'activityTypeId',
+  );
+  @override
+  late final GeneratedColumn<int> activityTypeId = GeneratedColumn<int>(
+    'activity_type_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'REFERENCES activity_types(id)',
+  );
   static const VerificationMeta _sessionDateTimeMeta = const VerificationMeta(
     'sessionDateTime',
   );
@@ -1403,16 +1438,14 @@ class $SessionsTable extends Sessions
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
-  static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
-    'durationMinutes',
-  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
-  late final GeneratedColumn<int> durationMinutes = GeneratedColumn<int>(
-    'duration_minutes',
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
     aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
@@ -1422,6 +1455,18 @@ class $SessionsTable extends Sessions
     false,
     type: DriftSqlType.double,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
+    'durationMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> durationMinutes = GeneratedColumn<int>(
+    'duration_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(60),
   );
   static const VerificationMeta _isCompletedMeta = const VerificationMeta(
     'isCompleted',
@@ -1438,68 +1483,44 @@ class $SessionsTable extends Sessions
     ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  static const VerificationMeta _isPaidMeta = const VerificationMeta('isPaid');
   @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-    'notes',
+  late final GeneratedColumn<bool> isPaid = GeneratedColumn<bool>(
+    'is_paid',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_paid" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _paymentIdMeta = const VerificationMeta(
+    'paymentId',
+  );
+  @override
+  late final GeneratedColumn<int> paymentId = GeneratedColumn<int>(
+    'payment_id',
     aliasedName,
     true,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
-  );
-  static const VerificationMeta _activityTypeIdMeta = const VerificationMeta(
-    'activityTypeId',
-  );
-  @override
-  late final GeneratedColumn<int> activityTypeId = GeneratedColumn<int>(
-    'activity_type_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES activity_types (id) ON DELETE RESTRICT',
-    ),
-  );
-  static const VerificationMeta _employeeIdMeta = const VerificationMeta(
-    'employeeId',
-  );
-  @override
-  late final GeneratedColumn<int> employeeId = GeneratedColumn<int>(
-    'employee_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES employees (id) ON DELETE RESTRICT',
-    ),
-  );
-  static const VerificationMeta _childIdMeta = const VerificationMeta(
-    'childId',
-  );
-  @override
-  late final GeneratedColumn<int> childId = GeneratedColumn<int>(
-    'child_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES children (id) ON DELETE CASCADE',
-    ),
+    $customConstraints: 'NULLABLE REFERENCES payments(id)',
   );
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    sessionDateTime,
-    durationMinutes,
-    price,
-    isCompleted,
-    notes,
-    activityTypeId,
-    employeeId,
     childId,
+    employeeId,
+    activityTypeId,
+    sessionDateTime,
+    notes,
+    price,
+    durationMinutes,
+    isCompleted,
+    isPaid,
+    paymentId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1508,7 +1529,7 @@ class $SessionsTable extends Sessions
   static const String $name = 'sessions';
   @override
   VerificationContext validateIntegrity(
-    Insertable<SessionEntry> instance, {
+    Insertable<Session> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1516,50 +1537,21 @@ class $SessionsTable extends Sessions
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('session_date_time')) {
+    if (data.containsKey('child_id')) {
       context.handle(
-        _sessionDateTimeMeta,
-        sessionDateTime.isAcceptableOrUnknown(
-          data['session_date_time']!,
-          _sessionDateTimeMeta,
-        ),
+        _childIdMeta,
+        childId.isAcceptableOrUnknown(data['child_id']!, _childIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_sessionDateTimeMeta);
+      context.missing(_childIdMeta);
     }
-    if (data.containsKey('duration_minutes')) {
+    if (data.containsKey('employee_id')) {
       context.handle(
-        _durationMinutesMeta,
-        durationMinutes.isAcceptableOrUnknown(
-          data['duration_minutes']!,
-          _durationMinutesMeta,
-        ),
+        _employeeIdMeta,
+        employeeId.isAcceptableOrUnknown(data['employee_id']!, _employeeIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_durationMinutesMeta);
-    }
-    if (data.containsKey('price')) {
-      context.handle(
-        _priceMeta,
-        price.isAcceptableOrUnknown(data['price']!, _priceMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_priceMeta);
-    }
-    if (data.containsKey('is_completed')) {
-      context.handle(
-        _isCompletedMeta,
-        isCompleted.isAcceptableOrUnknown(
-          data['is_completed']!,
-          _isCompletedMeta,
-        ),
-      );
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-        _notesMeta,
-        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
-      );
+      context.missing(_employeeIdMeta);
     }
     if (data.containsKey('activity_type_id')) {
       context.handle(
@@ -1572,21 +1564,60 @@ class $SessionsTable extends Sessions
     } else if (isInserting) {
       context.missing(_activityTypeIdMeta);
     }
-    if (data.containsKey('employee_id')) {
+    if (data.containsKey('session_date_time')) {
       context.handle(
-        _employeeIdMeta,
-        employeeId.isAcceptableOrUnknown(data['employee_id']!, _employeeIdMeta),
+        _sessionDateTimeMeta,
+        sessionDateTime.isAcceptableOrUnknown(
+          data['session_date_time']!,
+          _sessionDateTimeMeta,
+        ),
       );
     } else if (isInserting) {
-      context.missing(_employeeIdMeta);
+      context.missing(_sessionDateTimeMeta);
     }
-    if (data.containsKey('child_id')) {
+    if (data.containsKey('notes')) {
       context.handle(
-        _childIdMeta,
-        childId.isAcceptableOrUnknown(data['child_id']!, _childIdMeta),
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('price')) {
+      context.handle(
+        _priceMeta,
+        price.isAcceptableOrUnknown(data['price']!, _priceMeta),
       );
     } else if (isInserting) {
-      context.missing(_childIdMeta);
+      context.missing(_priceMeta);
+    }
+    if (data.containsKey('duration_minutes')) {
+      context.handle(
+        _durationMinutesMeta,
+        durationMinutes.isAcceptableOrUnknown(
+          data['duration_minutes']!,
+          _durationMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_completed')) {
+      context.handle(
+        _isCompletedMeta,
+        isCompleted.isAcceptableOrUnknown(
+          data['is_completed']!,
+          _isCompletedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_paid')) {
+      context.handle(
+        _isPaidMeta,
+        isPaid.isAcceptableOrUnknown(data['is_paid']!, _isPaidMeta),
+      );
+    }
+    if (data.containsKey('payment_id')) {
+      context.handle(
+        _paymentIdMeta,
+        paymentId.isAcceptableOrUnknown(data['payment_id']!, _paymentIdMeta),
+      );
     }
     return context;
   }
@@ -1594,53 +1625,62 @@ class $SessionsTable extends Sessions
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  SessionEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Session map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SessionEntry(
+    return Session(
       id:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
             data['${effectivePrefix}id'],
-          )!,
-      sessionDateTime:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}session_date_time'],
-          )!,
-      durationMinutes:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}duration_minutes'],
-          )!,
-      price:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}price'],
-          )!,
-      isCompleted:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.bool,
-            data['${effectivePrefix}is_completed'],
-          )!,
-      notes: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}notes'],
-      ),
-      activityTypeId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}activity_type_id'],
-          )!,
-      employeeId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}employee_id'],
           )!,
       childId:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
             data['${effectivePrefix}child_id'],
           )!,
+      employeeId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}employee_id'],
+          )!,
+      activityTypeId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}activity_type_id'],
+          )!,
+      sessionDateTime:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}session_date_time'],
+          )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      price:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}price'],
+          )!,
+      durationMinutes:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}duration_minutes'],
+          )!,
+      isCompleted:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}is_completed'],
+          )!,
+      isPaid:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}is_paid'],
+          )!,
+      paymentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}payment_id'],
+      ),
     );
   }
 
@@ -1650,74 +1690,89 @@ class $SessionsTable extends Sessions
   }
 }
 
-class SessionEntry extends DataClass implements Insertable<SessionEntry> {
+class Session extends DataClass implements Insertable<Session> {
   final int id;
-  final DateTime sessionDateTime;
-  final int durationMinutes;
-  final double price;
-  final bool isCompleted;
-  final String? notes;
-  final int activityTypeId;
-  final int employeeId;
   final int childId;
-  const SessionEntry({
+  final int employeeId;
+  final int activityTypeId;
+  final DateTime sessionDateTime;
+  final String? notes;
+  final double price;
+  final int durationMinutes;
+  final bool isCompleted;
+  final bool isPaid;
+  final int? paymentId;
+  const Session({
     required this.id,
-    required this.sessionDateTime,
-    required this.durationMinutes,
-    required this.price,
-    required this.isCompleted,
-    this.notes,
-    required this.activityTypeId,
-    required this.employeeId,
     required this.childId,
+    required this.employeeId,
+    required this.activityTypeId,
+    required this.sessionDateTime,
+    this.notes,
+    required this.price,
+    required this.durationMinutes,
+    required this.isCompleted,
+    required this.isPaid,
+    this.paymentId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['child_id'] = Variable<int>(childId);
+    map['employee_id'] = Variable<int>(employeeId);
+    map['activity_type_id'] = Variable<int>(activityTypeId);
     map['session_date_time'] = Variable<DateTime>(sessionDateTime);
-    map['duration_minutes'] = Variable<int>(durationMinutes);
-    map['price'] = Variable<double>(price);
-    map['is_completed'] = Variable<bool>(isCompleted);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
-    map['activity_type_id'] = Variable<int>(activityTypeId);
-    map['employee_id'] = Variable<int>(employeeId);
-    map['child_id'] = Variable<int>(childId);
+    map['price'] = Variable<double>(price);
+    map['duration_minutes'] = Variable<int>(durationMinutes);
+    map['is_completed'] = Variable<bool>(isCompleted);
+    map['is_paid'] = Variable<bool>(isPaid);
+    if (!nullToAbsent || paymentId != null) {
+      map['payment_id'] = Variable<int>(paymentId);
+    }
     return map;
   }
 
   SessionsCompanion toCompanion(bool nullToAbsent) {
     return SessionsCompanion(
       id: Value(id),
+      childId: Value(childId),
+      employeeId: Value(employeeId),
+      activityTypeId: Value(activityTypeId),
       sessionDateTime: Value(sessionDateTime),
-      durationMinutes: Value(durationMinutes),
-      price: Value(price),
-      isCompleted: Value(isCompleted),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
-      activityTypeId: Value(activityTypeId),
-      employeeId: Value(employeeId),
-      childId: Value(childId),
+      price: Value(price),
+      durationMinutes: Value(durationMinutes),
+      isCompleted: Value(isCompleted),
+      isPaid: Value(isPaid),
+      paymentId:
+          paymentId == null && nullToAbsent
+              ? const Value.absent()
+              : Value(paymentId),
     );
   }
 
-  factory SessionEntry.fromJson(
+  factory Session.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SessionEntry(
+    return Session(
       id: serializer.fromJson<int>(json['id']),
-      sessionDateTime: serializer.fromJson<DateTime>(json['sessionDateTime']),
-      durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
-      price: serializer.fromJson<double>(json['price']),
-      isCompleted: serializer.fromJson<bool>(json['isCompleted']),
-      notes: serializer.fromJson<String?>(json['notes']),
-      activityTypeId: serializer.fromJson<int>(json['activityTypeId']),
-      employeeId: serializer.fromJson<int>(json['employeeId']),
       childId: serializer.fromJson<int>(json['childId']),
+      employeeId: serializer.fromJson<int>(json['employeeId']),
+      activityTypeId: serializer.fromJson<int>(json['activityTypeId']),
+      sessionDateTime: serializer.fromJson<DateTime>(json['sessionDateTime']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      price: serializer.fromJson<double>(json['price']),
+      durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
+      isCompleted: serializer.fromJson<bool>(json['isCompleted']),
+      isPaid: serializer.fromJson<bool>(json['isPaid']),
+      paymentId: serializer.fromJson<int?>(json['paymentId']),
     );
   }
   @override
@@ -1725,75 +1780,85 @@ class SessionEntry extends DataClass implements Insertable<SessionEntry> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'sessionDateTime': serializer.toJson<DateTime>(sessionDateTime),
-      'durationMinutes': serializer.toJson<int>(durationMinutes),
-      'price': serializer.toJson<double>(price),
-      'isCompleted': serializer.toJson<bool>(isCompleted),
-      'notes': serializer.toJson<String?>(notes),
-      'activityTypeId': serializer.toJson<int>(activityTypeId),
-      'employeeId': serializer.toJson<int>(employeeId),
       'childId': serializer.toJson<int>(childId),
+      'employeeId': serializer.toJson<int>(employeeId),
+      'activityTypeId': serializer.toJson<int>(activityTypeId),
+      'sessionDateTime': serializer.toJson<DateTime>(sessionDateTime),
+      'notes': serializer.toJson<String?>(notes),
+      'price': serializer.toJson<double>(price),
+      'durationMinutes': serializer.toJson<int>(durationMinutes),
+      'isCompleted': serializer.toJson<bool>(isCompleted),
+      'isPaid': serializer.toJson<bool>(isPaid),
+      'paymentId': serializer.toJson<int?>(paymentId),
     };
   }
 
-  SessionEntry copyWith({
+  Session copyWith({
     int? id,
-    DateTime? sessionDateTime,
-    int? durationMinutes,
-    double? price,
-    bool? isCompleted,
-    Value<String?> notes = const Value.absent(),
-    int? activityTypeId,
-    int? employeeId,
     int? childId,
-  }) => SessionEntry(
+    int? employeeId,
+    int? activityTypeId,
+    DateTime? sessionDateTime,
+    Value<String?> notes = const Value.absent(),
+    double? price,
+    int? durationMinutes,
+    bool? isCompleted,
+    bool? isPaid,
+    Value<int?> paymentId = const Value.absent(),
+  }) => Session(
     id: id ?? this.id,
-    sessionDateTime: sessionDateTime ?? this.sessionDateTime,
-    durationMinutes: durationMinutes ?? this.durationMinutes,
-    price: price ?? this.price,
-    isCompleted: isCompleted ?? this.isCompleted,
-    notes: notes.present ? notes.value : this.notes,
-    activityTypeId: activityTypeId ?? this.activityTypeId,
-    employeeId: employeeId ?? this.employeeId,
     childId: childId ?? this.childId,
+    employeeId: employeeId ?? this.employeeId,
+    activityTypeId: activityTypeId ?? this.activityTypeId,
+    sessionDateTime: sessionDateTime ?? this.sessionDateTime,
+    notes: notes.present ? notes.value : this.notes,
+    price: price ?? this.price,
+    durationMinutes: durationMinutes ?? this.durationMinutes,
+    isCompleted: isCompleted ?? this.isCompleted,
+    isPaid: isPaid ?? this.isPaid,
+    paymentId: paymentId.present ? paymentId.value : this.paymentId,
   );
-  SessionEntry copyWithCompanion(SessionsCompanion data) {
-    return SessionEntry(
+  Session copyWithCompanion(SessionsCompanion data) {
+    return Session(
       id: data.id.present ? data.id.value : this.id,
-      sessionDateTime:
-          data.sessionDateTime.present
-              ? data.sessionDateTime.value
-              : this.sessionDateTime,
-      durationMinutes:
-          data.durationMinutes.present
-              ? data.durationMinutes.value
-              : this.durationMinutes,
-      price: data.price.present ? data.price.value : this.price,
-      isCompleted:
-          data.isCompleted.present ? data.isCompleted.value : this.isCompleted,
-      notes: data.notes.present ? data.notes.value : this.notes,
+      childId: data.childId.present ? data.childId.value : this.childId,
+      employeeId:
+          data.employeeId.present ? data.employeeId.value : this.employeeId,
       activityTypeId:
           data.activityTypeId.present
               ? data.activityTypeId.value
               : this.activityTypeId,
-      employeeId:
-          data.employeeId.present ? data.employeeId.value : this.employeeId,
-      childId: data.childId.present ? data.childId.value : this.childId,
+      sessionDateTime:
+          data.sessionDateTime.present
+              ? data.sessionDateTime.value
+              : this.sessionDateTime,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      price: data.price.present ? data.price.value : this.price,
+      durationMinutes:
+          data.durationMinutes.present
+              ? data.durationMinutes.value
+              : this.durationMinutes,
+      isCompleted:
+          data.isCompleted.present ? data.isCompleted.value : this.isCompleted,
+      isPaid: data.isPaid.present ? data.isPaid.value : this.isPaid,
+      paymentId: data.paymentId.present ? data.paymentId.value : this.paymentId,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('SessionEntry(')
+    return (StringBuffer('Session(')
           ..write('id: $id, ')
-          ..write('sessionDateTime: $sessionDateTime, ')
-          ..write('durationMinutes: $durationMinutes, ')
-          ..write('price: $price, ')
-          ..write('isCompleted: $isCompleted, ')
-          ..write('notes: $notes, ')
-          ..write('activityTypeId: $activityTypeId, ')
+          ..write('childId: $childId, ')
           ..write('employeeId: $employeeId, ')
-          ..write('childId: $childId')
+          ..write('activityTypeId: $activityTypeId, ')
+          ..write('sessionDateTime: $sessionDateTime, ')
+          ..write('notes: $notes, ')
+          ..write('price: $price, ')
+          ..write('durationMinutes: $durationMinutes, ')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('isPaid: $isPaid, ')
+          ..write('paymentId: $paymentId')
           ..write(')'))
         .toString();
   }
@@ -1801,112 +1866,129 @@ class SessionEntry extends DataClass implements Insertable<SessionEntry> {
   @override
   int get hashCode => Object.hash(
     id,
-    sessionDateTime,
-    durationMinutes,
-    price,
-    isCompleted,
-    notes,
-    activityTypeId,
-    employeeId,
     childId,
+    employeeId,
+    activityTypeId,
+    sessionDateTime,
+    notes,
+    price,
+    durationMinutes,
+    isCompleted,
+    isPaid,
+    paymentId,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is SessionEntry &&
+      (other is Session &&
           other.id == this.id &&
-          other.sessionDateTime == this.sessionDateTime &&
-          other.durationMinutes == this.durationMinutes &&
-          other.price == this.price &&
-          other.isCompleted == this.isCompleted &&
-          other.notes == this.notes &&
-          other.activityTypeId == this.activityTypeId &&
+          other.childId == this.childId &&
           other.employeeId == this.employeeId &&
-          other.childId == this.childId);
+          other.activityTypeId == this.activityTypeId &&
+          other.sessionDateTime == this.sessionDateTime &&
+          other.notes == this.notes &&
+          other.price == this.price &&
+          other.durationMinutes == this.durationMinutes &&
+          other.isCompleted == this.isCompleted &&
+          other.isPaid == this.isPaid &&
+          other.paymentId == this.paymentId);
 }
 
-class SessionsCompanion extends UpdateCompanion<SessionEntry> {
+class SessionsCompanion extends UpdateCompanion<Session> {
   final Value<int> id;
-  final Value<DateTime> sessionDateTime;
-  final Value<int> durationMinutes;
-  final Value<double> price;
-  final Value<bool> isCompleted;
-  final Value<String?> notes;
-  final Value<int> activityTypeId;
-  final Value<int> employeeId;
   final Value<int> childId;
+  final Value<int> employeeId;
+  final Value<int> activityTypeId;
+  final Value<DateTime> sessionDateTime;
+  final Value<String?> notes;
+  final Value<double> price;
+  final Value<int> durationMinutes;
+  final Value<bool> isCompleted;
+  final Value<bool> isPaid;
+  final Value<int?> paymentId;
   const SessionsCompanion({
     this.id = const Value.absent(),
-    this.sessionDateTime = const Value.absent(),
-    this.durationMinutes = const Value.absent(),
-    this.price = const Value.absent(),
-    this.isCompleted = const Value.absent(),
-    this.notes = const Value.absent(),
-    this.activityTypeId = const Value.absent(),
-    this.employeeId = const Value.absent(),
     this.childId = const Value.absent(),
+    this.employeeId = const Value.absent(),
+    this.activityTypeId = const Value.absent(),
+    this.sessionDateTime = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.price = const Value.absent(),
+    this.durationMinutes = const Value.absent(),
+    this.isCompleted = const Value.absent(),
+    this.isPaid = const Value.absent(),
+    this.paymentId = const Value.absent(),
   });
   SessionsCompanion.insert({
     this.id = const Value.absent(),
-    required DateTime sessionDateTime,
-    required int durationMinutes,
-    required double price,
-    this.isCompleted = const Value.absent(),
-    this.notes = const Value.absent(),
-    required int activityTypeId,
-    required int employeeId,
     required int childId,
-  }) : sessionDateTime = Value(sessionDateTime),
-       durationMinutes = Value(durationMinutes),
-       price = Value(price),
-       activityTypeId = Value(activityTypeId),
+    required int employeeId,
+    required int activityTypeId,
+    required DateTime sessionDateTime,
+    this.notes = const Value.absent(),
+    required double price,
+    this.durationMinutes = const Value.absent(),
+    this.isCompleted = const Value.absent(),
+    this.isPaid = const Value.absent(),
+    this.paymentId = const Value.absent(),
+  }) : childId = Value(childId),
        employeeId = Value(employeeId),
-       childId = Value(childId);
-  static Insertable<SessionEntry> custom({
+       activityTypeId = Value(activityTypeId),
+       sessionDateTime = Value(sessionDateTime),
+       price = Value(price);
+  static Insertable<Session> custom({
     Expression<int>? id,
-    Expression<DateTime>? sessionDateTime,
-    Expression<int>? durationMinutes,
-    Expression<double>? price,
-    Expression<bool>? isCompleted,
-    Expression<String>? notes,
-    Expression<int>? activityTypeId,
-    Expression<int>? employeeId,
     Expression<int>? childId,
+    Expression<int>? employeeId,
+    Expression<int>? activityTypeId,
+    Expression<DateTime>? sessionDateTime,
+    Expression<String>? notes,
+    Expression<double>? price,
+    Expression<int>? durationMinutes,
+    Expression<bool>? isCompleted,
+    Expression<bool>? isPaid,
+    Expression<int>? paymentId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (sessionDateTime != null) 'session_date_time': sessionDateTime,
-      if (durationMinutes != null) 'duration_minutes': durationMinutes,
-      if (price != null) 'price': price,
-      if (isCompleted != null) 'is_completed': isCompleted,
-      if (notes != null) 'notes': notes,
-      if (activityTypeId != null) 'activity_type_id': activityTypeId,
-      if (employeeId != null) 'employee_id': employeeId,
       if (childId != null) 'child_id': childId,
+      if (employeeId != null) 'employee_id': employeeId,
+      if (activityTypeId != null) 'activity_type_id': activityTypeId,
+      if (sessionDateTime != null) 'session_date_time': sessionDateTime,
+      if (notes != null) 'notes': notes,
+      if (price != null) 'price': price,
+      if (durationMinutes != null) 'duration_minutes': durationMinutes,
+      if (isCompleted != null) 'is_completed': isCompleted,
+      if (isPaid != null) 'is_paid': isPaid,
+      if (paymentId != null) 'payment_id': paymentId,
     });
   }
 
   SessionsCompanion copyWith({
     Value<int>? id,
-    Value<DateTime>? sessionDateTime,
-    Value<int>? durationMinutes,
-    Value<double>? price,
-    Value<bool>? isCompleted,
-    Value<String?>? notes,
-    Value<int>? activityTypeId,
-    Value<int>? employeeId,
     Value<int>? childId,
+    Value<int>? employeeId,
+    Value<int>? activityTypeId,
+    Value<DateTime>? sessionDateTime,
+    Value<String?>? notes,
+    Value<double>? price,
+    Value<int>? durationMinutes,
+    Value<bool>? isCompleted,
+    Value<bool>? isPaid,
+    Value<int?>? paymentId,
   }) {
     return SessionsCompanion(
       id: id ?? this.id,
-      sessionDateTime: sessionDateTime ?? this.sessionDateTime,
-      durationMinutes: durationMinutes ?? this.durationMinutes,
-      price: price ?? this.price,
-      isCompleted: isCompleted ?? this.isCompleted,
-      notes: notes ?? this.notes,
-      activityTypeId: activityTypeId ?? this.activityTypeId,
-      employeeId: employeeId ?? this.employeeId,
       childId: childId ?? this.childId,
+      employeeId: employeeId ?? this.employeeId,
+      activityTypeId: activityTypeId ?? this.activityTypeId,
+      sessionDateTime: sessionDateTime ?? this.sessionDateTime,
+      notes: notes ?? this.notes,
+      price: price ?? this.price,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      isCompleted: isCompleted ?? this.isCompleted,
+      isPaid: isPaid ?? this.isPaid,
+      paymentId: paymentId ?? this.paymentId,
     );
   }
 
@@ -1916,29 +1998,35 @@ class SessionsCompanion extends UpdateCompanion<SessionEntry> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (sessionDateTime.present) {
-      map['session_date_time'] = Variable<DateTime>(sessionDateTime.value);
-    }
-    if (durationMinutes.present) {
-      map['duration_minutes'] = Variable<int>(durationMinutes.value);
-    }
-    if (price.present) {
-      map['price'] = Variable<double>(price.value);
-    }
-    if (isCompleted.present) {
-      map['is_completed'] = Variable<bool>(isCompleted.value);
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    if (activityTypeId.present) {
-      map['activity_type_id'] = Variable<int>(activityTypeId.value);
+    if (childId.present) {
+      map['child_id'] = Variable<int>(childId.value);
     }
     if (employeeId.present) {
       map['employee_id'] = Variable<int>(employeeId.value);
     }
-    if (childId.present) {
-      map['child_id'] = Variable<int>(childId.value);
+    if (activityTypeId.present) {
+      map['activity_type_id'] = Variable<int>(activityTypeId.value);
+    }
+    if (sessionDateTime.present) {
+      map['session_date_time'] = Variable<DateTime>(sessionDateTime.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (price.present) {
+      map['price'] = Variable<double>(price.value);
+    }
+    if (durationMinutes.present) {
+      map['duration_minutes'] = Variable<int>(durationMinutes.value);
+    }
+    if (isCompleted.present) {
+      map['is_completed'] = Variable<bool>(isCompleted.value);
+    }
+    if (isPaid.present) {
+      map['is_paid'] = Variable<bool>(isPaid.value);
+    }
+    if (paymentId.present) {
+      map['payment_id'] = Variable<int>(paymentId.value);
     }
     return map;
   }
@@ -1947,14 +2035,493 @@ class SessionsCompanion extends UpdateCompanion<SessionEntry> {
   String toString() {
     return (StringBuffer('SessionsCompanion(')
           ..write('id: $id, ')
-          ..write('sessionDateTime: $sessionDateTime, ')
-          ..write('durationMinutes: $durationMinutes, ')
-          ..write('price: $price, ')
-          ..write('isCompleted: $isCompleted, ')
-          ..write('notes: $notes, ')
-          ..write('activityTypeId: $activityTypeId, ')
+          ..write('childId: $childId, ')
           ..write('employeeId: $employeeId, ')
-          ..write('childId: $childId')
+          ..write('activityTypeId: $activityTypeId, ')
+          ..write('sessionDateTime: $sessionDateTime, ')
+          ..write('notes: $notes, ')
+          ..write('price: $price, ')
+          ..write('durationMinutes: $durationMinutes, ')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('isPaid: $isPaid, ')
+          ..write('paymentId: $paymentId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PaymentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _clientIdMeta = const VerificationMeta(
+    'clientId',
+  );
+  @override
+  late final GeneratedColumn<int> clientId = GeneratedColumn<int>(
+    'client_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'REFERENCES children(id)',
+  );
+  static const VerificationMeta _paymentDateMeta = const VerificationMeta(
+    'paymentDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> paymentDate = GeneratedColumn<DateTime>(
+    'payment_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionCountMeta = const VerificationMeta(
+    'sessionCount',
+  );
+  @override
+  late final GeneratedColumn<int> sessionCount = GeneratedColumn<int>(
+    'session_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usedSessionsMeta = const VerificationMeta(
+    'usedSessions',
+  );
+  @override
+  late final GeneratedColumn<int> usedSessions = GeneratedColumn<int>(
+    'used_sessions',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    clientId,
+    paymentDate,
+    amount,
+    type,
+    sessionCount,
+    usedSessions,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'payments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Payment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('client_id')) {
+      context.handle(
+        _clientIdMeta,
+        clientId.isAcceptableOrUnknown(data['client_id']!, _clientIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_clientIdMeta);
+    }
+    if (data.containsKey('payment_date')) {
+      context.handle(
+        _paymentDateMeta,
+        paymentDate.isAcceptableOrUnknown(
+          data['payment_date']!,
+          _paymentDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_paymentDateMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('session_count')) {
+      context.handle(
+        _sessionCountMeta,
+        sessionCount.isAcceptableOrUnknown(
+          data['session_count']!,
+          _sessionCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionCountMeta);
+    }
+    if (data.containsKey('used_sessions')) {
+      context.handle(
+        _usedSessionsMeta,
+        usedSessions.isAcceptableOrUnknown(
+          data['used_sessions']!,
+          _usedSessionsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Payment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Payment(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      clientId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}client_id'],
+          )!,
+      paymentDate:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}payment_date'],
+          )!,
+      amount:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}amount'],
+          )!,
+      type:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}type'],
+          )!,
+      sessionCount:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}session_count'],
+          )!,
+      usedSessions:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}used_sessions'],
+          )!,
+    );
+  }
+
+  @override
+  $PaymentsTable createAlias(String alias) {
+    return $PaymentsTable(attachedDatabase, alias);
+  }
+}
+
+class Payment extends DataClass implements Insertable<Payment> {
+  final int id;
+  final int clientId;
+  final DateTime paymentDate;
+  final double amount;
+
+  /// Тип платежа: 'single' для разового, 'subscription' для абонемента.
+  final String type;
+
+  /// Количество занятий в абонементе (для разовых будет 1).
+  final int sessionCount;
+
+  /// Количество уже использованных занятий из абонемента.
+  final int usedSessions;
+  const Payment({
+    required this.id,
+    required this.clientId,
+    required this.paymentDate,
+    required this.amount,
+    required this.type,
+    required this.sessionCount,
+    required this.usedSessions,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['client_id'] = Variable<int>(clientId);
+    map['payment_date'] = Variable<DateTime>(paymentDate);
+    map['amount'] = Variable<double>(amount);
+    map['type'] = Variable<String>(type);
+    map['session_count'] = Variable<int>(sessionCount);
+    map['used_sessions'] = Variable<int>(usedSessions);
+    return map;
+  }
+
+  PaymentsCompanion toCompanion(bool nullToAbsent) {
+    return PaymentsCompanion(
+      id: Value(id),
+      clientId: Value(clientId),
+      paymentDate: Value(paymentDate),
+      amount: Value(amount),
+      type: Value(type),
+      sessionCount: Value(sessionCount),
+      usedSessions: Value(usedSessions),
+    );
+  }
+
+  factory Payment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Payment(
+      id: serializer.fromJson<int>(json['id']),
+      clientId: serializer.fromJson<int>(json['clientId']),
+      paymentDate: serializer.fromJson<DateTime>(json['paymentDate']),
+      amount: serializer.fromJson<double>(json['amount']),
+      type: serializer.fromJson<String>(json['type']),
+      sessionCount: serializer.fromJson<int>(json['sessionCount']),
+      usedSessions: serializer.fromJson<int>(json['usedSessions']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'clientId': serializer.toJson<int>(clientId),
+      'paymentDate': serializer.toJson<DateTime>(paymentDate),
+      'amount': serializer.toJson<double>(amount),
+      'type': serializer.toJson<String>(type),
+      'sessionCount': serializer.toJson<int>(sessionCount),
+      'usedSessions': serializer.toJson<int>(usedSessions),
+    };
+  }
+
+  Payment copyWith({
+    int? id,
+    int? clientId,
+    DateTime? paymentDate,
+    double? amount,
+    String? type,
+    int? sessionCount,
+    int? usedSessions,
+  }) => Payment(
+    id: id ?? this.id,
+    clientId: clientId ?? this.clientId,
+    paymentDate: paymentDate ?? this.paymentDate,
+    amount: amount ?? this.amount,
+    type: type ?? this.type,
+    sessionCount: sessionCount ?? this.sessionCount,
+    usedSessions: usedSessions ?? this.usedSessions,
+  );
+  Payment copyWithCompanion(PaymentsCompanion data) {
+    return Payment(
+      id: data.id.present ? data.id.value : this.id,
+      clientId: data.clientId.present ? data.clientId.value : this.clientId,
+      paymentDate:
+          data.paymentDate.present ? data.paymentDate.value : this.paymentDate,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      type: data.type.present ? data.type.value : this.type,
+      sessionCount:
+          data.sessionCount.present
+              ? data.sessionCount.value
+              : this.sessionCount,
+      usedSessions:
+          data.usedSessions.present
+              ? data.usedSessions.value
+              : this.usedSessions,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Payment(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('paymentDate: $paymentDate, ')
+          ..write('amount: $amount, ')
+          ..write('type: $type, ')
+          ..write('sessionCount: $sessionCount, ')
+          ..write('usedSessions: $usedSessions')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    clientId,
+    paymentDate,
+    amount,
+    type,
+    sessionCount,
+    usedSessions,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Payment &&
+          other.id == this.id &&
+          other.clientId == this.clientId &&
+          other.paymentDate == this.paymentDate &&
+          other.amount == this.amount &&
+          other.type == this.type &&
+          other.sessionCount == this.sessionCount &&
+          other.usedSessions == this.usedSessions);
+}
+
+class PaymentsCompanion extends UpdateCompanion<Payment> {
+  final Value<int> id;
+  final Value<int> clientId;
+  final Value<DateTime> paymentDate;
+  final Value<double> amount;
+  final Value<String> type;
+  final Value<int> sessionCount;
+  final Value<int> usedSessions;
+  const PaymentsCompanion({
+    this.id = const Value.absent(),
+    this.clientId = const Value.absent(),
+    this.paymentDate = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.type = const Value.absent(),
+    this.sessionCount = const Value.absent(),
+    this.usedSessions = const Value.absent(),
+  });
+  PaymentsCompanion.insert({
+    this.id = const Value.absent(),
+    required int clientId,
+    required DateTime paymentDate,
+    required double amount,
+    required String type,
+    required int sessionCount,
+    this.usedSessions = const Value.absent(),
+  }) : clientId = Value(clientId),
+       paymentDate = Value(paymentDate),
+       amount = Value(amount),
+       type = Value(type),
+       sessionCount = Value(sessionCount);
+  static Insertable<Payment> custom({
+    Expression<int>? id,
+    Expression<int>? clientId,
+    Expression<DateTime>? paymentDate,
+    Expression<double>? amount,
+    Expression<String>? type,
+    Expression<int>? sessionCount,
+    Expression<int>? usedSessions,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (clientId != null) 'client_id': clientId,
+      if (paymentDate != null) 'payment_date': paymentDate,
+      if (amount != null) 'amount': amount,
+      if (type != null) 'type': type,
+      if (sessionCount != null) 'session_count': sessionCount,
+      if (usedSessions != null) 'used_sessions': usedSessions,
+    });
+  }
+
+  PaymentsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? clientId,
+    Value<DateTime>? paymentDate,
+    Value<double>? amount,
+    Value<String>? type,
+    Value<int>? sessionCount,
+    Value<int>? usedSessions,
+  }) {
+    return PaymentsCompanion(
+      id: id ?? this.id,
+      clientId: clientId ?? this.clientId,
+      paymentDate: paymentDate ?? this.paymentDate,
+      amount: amount ?? this.amount,
+      type: type ?? this.type,
+      sessionCount: sessionCount ?? this.sessionCount,
+      usedSessions: usedSessions ?? this.usedSessions,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (clientId.present) {
+      map['client_id'] = Variable<int>(clientId.value);
+    }
+    if (paymentDate.present) {
+      map['payment_date'] = Variable<DateTime>(paymentDate.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (sessionCount.present) {
+      map['session_count'] = Variable<int>(sessionCount.value);
+    }
+    if (usedSessions.present) {
+      map['used_sessions'] = Variable<int>(usedSessions.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PaymentsCompanion(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('paymentDate: $paymentDate, ')
+          ..write('amount: $amount, ')
+          ..write('type: $type, ')
+          ..write('sessionCount: $sessionCount, ')
+          ..write('usedSessions: $usedSessions')
           ..write(')'))
         .toString();
   }
@@ -1963,21 +2530,26 @@ class SessionsCompanion extends UpdateCompanion<SessionEntry> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $EmployeesTable employees = $EmployeesTable(this);
   late final $ParentsTable parents = $ParentsTable(this);
   late final $ChildrenTable children = $ChildrenTable(this);
+  late final $EmployeesTable employees = $EmployeesTable(this);
   late final $ActivityTypesTable activityTypes = $ActivityTypesTable(this);
   late final $SessionsTable sessions = $SessionsTable(this);
+  late final $PaymentsTable payments = $PaymentsTable(this);
+  late final ScheduleDao scheduleDao = ScheduleDao(this as AppDatabase);
+  late final ClientDao clientDao = ClientDao(this as AppDatabase);
+  late final PaymentDao paymentDao = PaymentDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-    employees,
     parents,
     children,
+    employees,
     activityTypes,
     sessions,
+    payments,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1988,278 +2560,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('children', kind: UpdateKind.delete)],
     ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'children',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('sessions', kind: UpdateKind.delete)],
-    ),
   ]);
 }
 
-typedef $$EmployeesTableCreateCompanionBuilder =
-    EmployeesCompanion Function({
-      Value<int> id,
-      required String fullName,
-      required String position,
-    });
-typedef $$EmployeesTableUpdateCompanionBuilder =
-    EmployeesCompanion Function({
-      Value<int> id,
-      Value<String> fullName,
-      Value<String> position,
-    });
-
-final class $$EmployeesTableReferences
-    extends BaseReferences<_$AppDatabase, $EmployeesTable, EmployeeEntry> {
-  $$EmployeesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static MultiTypedResultKey<$SessionsTable, List<SessionEntry>>
-  _sessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.sessions,
-    aliasName: $_aliasNameGenerator(db.employees.id, db.sessions.employeeId),
-  );
-
-  $$SessionsTableProcessedTableManager get sessionsRefs {
-    final manager = $$SessionsTableTableManager(
-      $_db,
-      $_db.sessions,
-    ).filter((f) => f.employeeId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_sessionsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-}
-
-class $$EmployeesTableFilterComposer
-    extends Composer<_$AppDatabase, $EmployeesTable> {
-  $$EmployeesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get fullName => $composableBuilder(
-    column: $table.fullName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get position => $composableBuilder(
-    column: $table.position,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  Expression<bool> sessionsRefs(
-    Expression<bool> Function($$SessionsTableFilterComposer f) f,
-  ) {
-    final $$SessionsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.sessions,
-      getReferencedColumn: (t) => t.employeeId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SessionsTableFilterComposer(
-            $db: $db,
-            $table: $db.sessions,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$EmployeesTableOrderingComposer
-    extends Composer<_$AppDatabase, $EmployeesTable> {
-  $$EmployeesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get fullName => $composableBuilder(
-    column: $table.fullName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get position => $composableBuilder(
-    column: $table.position,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$EmployeesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $EmployeesTable> {
-  $$EmployeesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get fullName =>
-      $composableBuilder(column: $table.fullName, builder: (column) => column);
-
-  GeneratedColumn<String> get position =>
-      $composableBuilder(column: $table.position, builder: (column) => column);
-
-  Expression<T> sessionsRefs<T extends Object>(
-    Expression<T> Function($$SessionsTableAnnotationComposer a) f,
-  ) {
-    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.sessions,
-      getReferencedColumn: (t) => t.employeeId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SessionsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.sessions,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$EmployeesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $EmployeesTable,
-          EmployeeEntry,
-          $$EmployeesTableFilterComposer,
-          $$EmployeesTableOrderingComposer,
-          $$EmployeesTableAnnotationComposer,
-          $$EmployeesTableCreateCompanionBuilder,
-          $$EmployeesTableUpdateCompanionBuilder,
-          (EmployeeEntry, $$EmployeesTableReferences),
-          EmployeeEntry,
-          PrefetchHooks Function({bool sessionsRefs})
-        > {
-  $$EmployeesTableTableManager(_$AppDatabase db, $EmployeesTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer:
-              () => $$EmployeesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$EmployeesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$EmployeesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> fullName = const Value.absent(),
-                Value<String> position = const Value.absent(),
-              }) => EmployeesCompanion(
-                id: id,
-                fullName: fullName,
-                position: position,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String fullName,
-                required String position,
-              }) => EmployeesCompanion.insert(
-                id: id,
-                fullName: fullName,
-                position: position,
-              ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          $$EmployeesTableReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
-          prefetchHooksCallback: ({sessionsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (sessionsRefs) db.sessions],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (sessionsRefs)
-                    await $_getPrefetchedData<
-                      EmployeeEntry,
-                      $EmployeesTable,
-                      SessionEntry
-                    >(
-                      currentTable: table,
-                      referencedTable: $$EmployeesTableReferences
-                          ._sessionsRefsTable(db),
-                      managerFromTypedResult:
-                          (p0) =>
-                              $$EmployeesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).sessionsRefs,
-                      referencedItemsForCurrentItem:
-                          (item, referencedItems) => referencedItems.where(
-                            (e) => e.employeeId == item.id,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$EmployeesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $EmployeesTable,
-      EmployeeEntry,
-      $$EmployeesTableFilterComposer,
-      $$EmployeesTableOrderingComposer,
-      $$EmployeesTableAnnotationComposer,
-      $$EmployeesTableCreateCompanionBuilder,
-      $$EmployeesTableUpdateCompanionBuilder,
-      (EmployeeEntry, $$EmployeesTableReferences),
-      EmployeeEntry,
-      PrefetchHooks Function({bool sessionsRefs})
-    >;
 typedef $$ParentsTableCreateCompanionBuilder =
     ParentsCompanion Function({
       Value<int> id,
@@ -2600,8 +2903,9 @@ final class $$ChildrenTableReferences
     );
   }
 
-  static MultiTypedResultKey<$SessionsTable, List<SessionEntry>>
-  _sessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+  static MultiTypedResultKey<$SessionsTable, List<Session>> _sessionsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
     db.sessions,
     aliasName: $_aliasNameGenerator(db.children.id, db.sessions.childId),
   );
@@ -2613,6 +2917,25 @@ final class $$ChildrenTableReferences
     ).filter((f) => f.childId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_sessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$PaymentsTable, List<Payment>> _paymentsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.payments,
+    aliasName: $_aliasNameGenerator(db.children.id, db.payments.clientId),
+  );
+
+  $$PaymentsTableProcessedTableManager get paymentsRefs {
+    final manager = $$PaymentsTableTableManager(
+      $_db,
+      $_db.payments,
+    ).filter((f) => f.clientId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_paymentsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2687,6 +3010,31 @@ class $$ChildrenTableFilterComposer
           }) => $$SessionsTableFilterComposer(
             $db: $db,
             $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> paymentsRefs(
+    Expression<bool> Function($$PaymentsTableFilterComposer f) f,
+  ) {
+    final $$PaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.clientId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.payments,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2820,6 +3168,31 @@ class $$ChildrenTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> paymentsRefs<T extends Object>(
+    Expression<T> Function($$PaymentsTableAnnotationComposer a) f,
+  ) {
+    final $$PaymentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.clientId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ChildrenTableTableManager
@@ -2835,7 +3208,11 @@ class $$ChildrenTableTableManager
           $$ChildrenTableUpdateCompanionBuilder,
           (ChildEntry, $$ChildrenTableReferences),
           ChildEntry,
-          PrefetchHooks Function({bool parentId, bool sessionsRefs})
+          PrefetchHooks Function({
+            bool parentId,
+            bool sessionsRefs,
+            bool paymentsRefs,
+          })
         > {
   $$ChildrenTableTableManager(_$AppDatabase db, $ChildrenTable table)
     : super(
@@ -2886,10 +3263,17 @@ class $$ChildrenTableTableManager
                         ),
                       )
                       .toList(),
-          prefetchHooksCallback: ({parentId = false, sessionsRefs = false}) {
+          prefetchHooksCallback: ({
+            parentId = false,
+            sessionsRefs = false,
+            paymentsRefs = false,
+          }) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (sessionsRefs) db.sessions],
+              explicitlyWatchedTables: [
+                if (sessionsRefs) db.sessions,
+                if (paymentsRefs) db.payments,
+              ],
               addJoins: <
                 T extends TableManagerState<
                   dynamic,
@@ -2926,7 +3310,7 @@ class $$ChildrenTableTableManager
                     await $_getPrefetchedData<
                       ChildEntry,
                       $ChildrenTable,
-                      SessionEntry
+                      Session
                     >(
                       currentTable: table,
                       referencedTable: $$ChildrenTableReferences
@@ -2941,6 +3325,28 @@ class $$ChildrenTableTableManager
                       referencedItemsForCurrentItem:
                           (item, referencedItems) => referencedItems.where(
                             (e) => e.childId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                  if (paymentsRefs)
+                    await $_getPrefetchedData<
+                      ChildEntry,
+                      $ChildrenTable,
+                      Payment
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ChildrenTableReferences
+                          ._paymentsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
+                              $$ChildrenTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).paymentsRefs,
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.clientId == item.id,
                           ),
                       typedResults: items,
                     ),
@@ -2964,7 +3370,274 @@ typedef $$ChildrenTableProcessedTableManager =
       $$ChildrenTableUpdateCompanionBuilder,
       (ChildEntry, $$ChildrenTableReferences),
       ChildEntry,
-      PrefetchHooks Function({bool parentId, bool sessionsRefs})
+      PrefetchHooks Function({
+        bool parentId,
+        bool sessionsRefs,
+        bool paymentsRefs,
+      })
+    >;
+typedef $$EmployeesTableCreateCompanionBuilder =
+    EmployeesCompanion Function({
+      Value<int> id,
+      required String fullName,
+      required String position,
+    });
+typedef $$EmployeesTableUpdateCompanionBuilder =
+    EmployeesCompanion Function({
+      Value<int> id,
+      Value<String> fullName,
+      Value<String> position,
+    });
+
+final class $$EmployeesTableReferences
+    extends BaseReferences<_$AppDatabase, $EmployeesTable, EmployeeEntry> {
+  $$EmployeesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$SessionsTable, List<Session>> _sessionsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.sessions,
+    aliasName: $_aliasNameGenerator(db.employees.id, db.sessions.employeeId),
+  );
+
+  $$SessionsTableProcessedTableManager get sessionsRefs {
+    final manager = $$SessionsTableTableManager(
+      $_db,
+      $_db.sessions,
+    ).filter((f) => f.employeeId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_sessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$EmployeesTableFilterComposer
+    extends Composer<_$AppDatabase, $EmployeesTable> {
+  $$EmployeesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fullName => $composableBuilder(
+    column: $table.fullName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> sessionsRefs(
+    Expression<bool> Function($$SessionsTableFilterComposer f) f,
+  ) {
+    final $$SessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.employeeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$EmployeesTableOrderingComposer
+    extends Composer<_$AppDatabase, $EmployeesTable> {
+  $$EmployeesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fullName => $composableBuilder(
+    column: $table.fullName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EmployeesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EmployeesTable> {
+  $$EmployeesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get fullName =>
+      $composableBuilder(column: $table.fullName, builder: (column) => column);
+
+  GeneratedColumn<String> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  Expression<T> sessionsRefs<T extends Object>(
+    Expression<T> Function($$SessionsTableAnnotationComposer a) f,
+  ) {
+    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.employeeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$EmployeesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EmployeesTable,
+          EmployeeEntry,
+          $$EmployeesTableFilterComposer,
+          $$EmployeesTableOrderingComposer,
+          $$EmployeesTableAnnotationComposer,
+          $$EmployeesTableCreateCompanionBuilder,
+          $$EmployeesTableUpdateCompanionBuilder,
+          (EmployeeEntry, $$EmployeesTableReferences),
+          EmployeeEntry,
+          PrefetchHooks Function({bool sessionsRefs})
+        > {
+  $$EmployeesTableTableManager(_$AppDatabase db, $EmployeesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$EmployeesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$EmployeesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$EmployeesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> fullName = const Value.absent(),
+                Value<String> position = const Value.absent(),
+              }) => EmployeesCompanion(
+                id: id,
+                fullName: fullName,
+                position: position,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String fullName,
+                required String position,
+              }) => EmployeesCompanion.insert(
+                id: id,
+                fullName: fullName,
+                position: position,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$EmployeesTableReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: ({sessionsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (sessionsRefs) db.sessions],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (sessionsRefs)
+                    await $_getPrefetchedData<
+                      EmployeeEntry,
+                      $EmployeesTable,
+                      Session
+                    >(
+                      currentTable: table,
+                      referencedTable: $$EmployeesTableReferences
+                          ._sessionsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
+                              $$EmployeesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).sessionsRefs,
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.employeeId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$EmployeesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EmployeesTable,
+      EmployeeEntry,
+      $$EmployeesTableFilterComposer,
+      $$EmployeesTableOrderingComposer,
+      $$EmployeesTableAnnotationComposer,
+      $$EmployeesTableCreateCompanionBuilder,
+      $$EmployeesTableUpdateCompanionBuilder,
+      (EmployeeEntry, $$EmployeesTableReferences),
+      EmployeeEntry,
+      PrefetchHooks Function({bool sessionsRefs})
     >;
 typedef $$ActivityTypesTableCreateCompanionBuilder =
     ActivityTypesCompanion Function({
@@ -2992,8 +3665,9 @@ final class $$ActivityTypesTableReferences
     super.$_typedResult,
   );
 
-  static MultiTypedResultKey<$SessionsTable, List<SessionEntry>>
-  _sessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+  static MultiTypedResultKey<$SessionsTable, List<Session>> _sessionsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
     db.sessions,
     aliasName: $_aliasNameGenerator(
       db.activityTypes.id,
@@ -3244,7 +3918,7 @@ class $$ActivityTypesTableTableManager
                     await $_getPrefetchedData<
                       ActivityTypeEntry,
                       $ActivityTypesTable,
-                      SessionEntry
+                      Session
                     >(
                       currentTable: table,
                       referencedTable: $$ActivityTypesTableReferences
@@ -3287,45 +3961,47 @@ typedef $$ActivityTypesTableProcessedTableManager =
 typedef $$SessionsTableCreateCompanionBuilder =
     SessionsCompanion Function({
       Value<int> id,
-      required DateTime sessionDateTime,
-      required int durationMinutes,
-      required double price,
-      Value<bool> isCompleted,
-      Value<String?> notes,
-      required int activityTypeId,
-      required int employeeId,
       required int childId,
+      required int employeeId,
+      required int activityTypeId,
+      required DateTime sessionDateTime,
+      Value<String?> notes,
+      required double price,
+      Value<int> durationMinutes,
+      Value<bool> isCompleted,
+      Value<bool> isPaid,
+      Value<int?> paymentId,
     });
 typedef $$SessionsTableUpdateCompanionBuilder =
     SessionsCompanion Function({
       Value<int> id,
-      Value<DateTime> sessionDateTime,
-      Value<int> durationMinutes,
-      Value<double> price,
-      Value<bool> isCompleted,
-      Value<String?> notes,
-      Value<int> activityTypeId,
-      Value<int> employeeId,
       Value<int> childId,
+      Value<int> employeeId,
+      Value<int> activityTypeId,
+      Value<DateTime> sessionDateTime,
+      Value<String?> notes,
+      Value<double> price,
+      Value<int> durationMinutes,
+      Value<bool> isCompleted,
+      Value<bool> isPaid,
+      Value<int?> paymentId,
     });
 
 final class $$SessionsTableReferences
-    extends BaseReferences<_$AppDatabase, $SessionsTable, SessionEntry> {
+    extends BaseReferences<_$AppDatabase, $SessionsTable, Session> {
   $$SessionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $ActivityTypesTable _activityTypeIdTable(_$AppDatabase db) =>
-      db.activityTypes.createAlias(
-        $_aliasNameGenerator(db.sessions.activityTypeId, db.activityTypes.id),
-      );
+  static $ChildrenTable _childIdTable(_$AppDatabase db) => db.children
+      .createAlias($_aliasNameGenerator(db.sessions.childId, db.children.id));
 
-  $$ActivityTypesTableProcessedTableManager get activityTypeId {
-    final $_column = $_itemColumn<int>('activity_type_id')!;
+  $$ChildrenTableProcessedTableManager get childId {
+    final $_column = $_itemColumn<int>('child_id')!;
 
-    final manager = $$ActivityTypesTableTableManager(
+    final manager = $$ChildrenTableTableManager(
       $_db,
-      $_db.activityTypes,
+      $_db.children,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_activityTypeIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_childIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -3351,17 +4027,19 @@ final class $$SessionsTableReferences
     );
   }
 
-  static $ChildrenTable _childIdTable(_$AppDatabase db) => db.children
-      .createAlias($_aliasNameGenerator(db.sessions.childId, db.children.id));
+  static $ActivityTypesTable _activityTypeIdTable(_$AppDatabase db) =>
+      db.activityTypes.createAlias(
+        $_aliasNameGenerator(db.sessions.activityTypeId, db.activityTypes.id),
+      );
 
-  $$ChildrenTableProcessedTableManager get childId {
-    final $_column = $_itemColumn<int>('child_id')!;
+  $$ActivityTypesTableProcessedTableManager get activityTypeId {
+    final $_column = $_itemColumn<int>('activity_type_id')!;
 
-    final manager = $$ChildrenTableTableManager(
+    final manager = $$ActivityTypesTableTableManager(
       $_db,
-      $_db.children,
+      $_db.activityTypes,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_childIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_activityTypeIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -3388,8 +4066,8 @@ class $$SessionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get durationMinutes => $composableBuilder(
-    column: $table.durationMinutes,
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3398,30 +4076,40 @@ class $$SessionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get notes => $composableBuilder(
-    column: $table.notes,
+  ColumnFilters<bool> get isPaid => $composableBuilder(
+    column: $table.isPaid,
     builder: (column) => ColumnFilters(column),
   );
 
-  $$ActivityTypesTableFilterComposer get activityTypeId {
-    final $$ActivityTypesTableFilterComposer composer = $composerBuilder(
+  ColumnFilters<int> get paymentId => $composableBuilder(
+    column: $table.paymentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ChildrenTableFilterComposer get childId {
+    final $$ChildrenTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.activityTypeId,
-      referencedTable: $db.activityTypes,
+      getCurrentColumn: (t) => t.childId,
+      referencedTable: $db.children,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ActivityTypesTableFilterComposer(
+          }) => $$ChildrenTableFilterComposer(
             $db: $db,
-            $table: $db.activityTypes,
+            $table: $db.children,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3454,20 +4142,20 @@ class $$SessionsTableFilterComposer
     return composer;
   }
 
-  $$ChildrenTableFilterComposer get childId {
-    final $$ChildrenTableFilterComposer composer = $composerBuilder(
+  $$ActivityTypesTableFilterComposer get activityTypeId {
+    final $$ActivityTypesTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.childId,
-      referencedTable: $db.children,
+      getCurrentColumn: (t) => t.activityTypeId,
+      referencedTable: $db.activityTypes,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ChildrenTableFilterComposer(
+          }) => $$ActivityTypesTableFilterComposer(
             $db: $db,
-            $table: $db.children,
+            $table: $db.activityTypes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3497,8 +4185,8 @@ class $$SessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get durationMinutes => $composableBuilder(
-    column: $table.durationMinutes,
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3507,30 +4195,40 @@ class $$SessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get notes => $composableBuilder(
-    column: $table.notes,
+  ColumnOrderings<bool> get isPaid => $composableBuilder(
+    column: $table.isPaid,
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$ActivityTypesTableOrderingComposer get activityTypeId {
-    final $$ActivityTypesTableOrderingComposer composer = $composerBuilder(
+  ColumnOrderings<int> get paymentId => $composableBuilder(
+    column: $table.paymentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ChildrenTableOrderingComposer get childId {
+    final $$ChildrenTableOrderingComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.activityTypeId,
-      referencedTable: $db.activityTypes,
+      getCurrentColumn: (t) => t.childId,
+      referencedTable: $db.children,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ActivityTypesTableOrderingComposer(
+          }) => $$ChildrenTableOrderingComposer(
             $db: $db,
-            $table: $db.activityTypes,
+            $table: $db.children,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3563,20 +4261,20 @@ class $$SessionsTableOrderingComposer
     return composer;
   }
 
-  $$ChildrenTableOrderingComposer get childId {
-    final $$ChildrenTableOrderingComposer composer = $composerBuilder(
+  $$ActivityTypesTableOrderingComposer get activityTypeId {
+    final $$ActivityTypesTableOrderingComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.childId,
-      referencedTable: $db.children,
+      getCurrentColumn: (t) => t.activityTypeId,
+      referencedTable: $db.activityTypes,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ChildrenTableOrderingComposer(
+          }) => $$ActivityTypesTableOrderingComposer(
             $db: $db,
-            $table: $db.children,
+            $table: $db.activityTypes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3604,36 +4302,42 @@ class $$SessionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<double> get price =>
+      $composableBuilder(column: $table.price, builder: (column) => column);
+
   GeneratedColumn<int> get durationMinutes => $composableBuilder(
     column: $table.durationMinutes,
     builder: (column) => column,
   );
-
-  GeneratedColumn<double> get price =>
-      $composableBuilder(column: $table.price, builder: (column) => column);
 
   GeneratedColumn<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
+  GeneratedColumn<bool> get isPaid =>
+      $composableBuilder(column: $table.isPaid, builder: (column) => column);
 
-  $$ActivityTypesTableAnnotationComposer get activityTypeId {
-    final $$ActivityTypesTableAnnotationComposer composer = $composerBuilder(
+  GeneratedColumn<int> get paymentId =>
+      $composableBuilder(column: $table.paymentId, builder: (column) => column);
+
+  $$ChildrenTableAnnotationComposer get childId {
+    final $$ChildrenTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.activityTypeId,
-      referencedTable: $db.activityTypes,
+      getCurrentColumn: (t) => t.childId,
+      referencedTable: $db.children,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ActivityTypesTableAnnotationComposer(
+          }) => $$ChildrenTableAnnotationComposer(
             $db: $db,
-            $table: $db.activityTypes,
+            $table: $db.children,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3666,10 +4370,421 @@ class $$SessionsTableAnnotationComposer
     return composer;
   }
 
-  $$ChildrenTableAnnotationComposer get childId {
+  $$ActivityTypesTableAnnotationComposer get activityTypeId {
+    final $$ActivityTypesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.activityTypeId,
+      referencedTable: $db.activityTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ActivityTypesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.activityTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SessionsTable,
+          Session,
+          $$SessionsTableFilterComposer,
+          $$SessionsTableOrderingComposer,
+          $$SessionsTableAnnotationComposer,
+          $$SessionsTableCreateCompanionBuilder,
+          $$SessionsTableUpdateCompanionBuilder,
+          (Session, $$SessionsTableReferences),
+          Session,
+          PrefetchHooks Function({
+            bool childId,
+            bool employeeId,
+            bool activityTypeId,
+          })
+        > {
+  $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$SessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$SessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$SessionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> childId = const Value.absent(),
+                Value<int> employeeId = const Value.absent(),
+                Value<int> activityTypeId = const Value.absent(),
+                Value<DateTime> sessionDateTime = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<double> price = const Value.absent(),
+                Value<int> durationMinutes = const Value.absent(),
+                Value<bool> isCompleted = const Value.absent(),
+                Value<bool> isPaid = const Value.absent(),
+                Value<int?> paymentId = const Value.absent(),
+              }) => SessionsCompanion(
+                id: id,
+                childId: childId,
+                employeeId: employeeId,
+                activityTypeId: activityTypeId,
+                sessionDateTime: sessionDateTime,
+                notes: notes,
+                price: price,
+                durationMinutes: durationMinutes,
+                isCompleted: isCompleted,
+                isPaid: isPaid,
+                paymentId: paymentId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int childId,
+                required int employeeId,
+                required int activityTypeId,
+                required DateTime sessionDateTime,
+                Value<String?> notes = const Value.absent(),
+                required double price,
+                Value<int> durationMinutes = const Value.absent(),
+                Value<bool> isCompleted = const Value.absent(),
+                Value<bool> isPaid = const Value.absent(),
+                Value<int?> paymentId = const Value.absent(),
+              }) => SessionsCompanion.insert(
+                id: id,
+                childId: childId,
+                employeeId: employeeId,
+                activityTypeId: activityTypeId,
+                sessionDateTime: sessionDateTime,
+                notes: notes,
+                price: price,
+                durationMinutes: durationMinutes,
+                isCompleted: isCompleted,
+                isPaid: isPaid,
+                paymentId: paymentId,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$SessionsTableReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: ({
+            childId = false,
+            employeeId = false,
+            activityTypeId = false,
+          }) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                T extends TableManagerState<
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic
+                >
+              >(state) {
+                if (childId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.childId,
+                            referencedTable: $$SessionsTableReferences
+                                ._childIdTable(db),
+                            referencedColumn:
+                                $$SessionsTableReferences._childIdTable(db).id,
+                          )
+                          as T;
+                }
+                if (employeeId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.employeeId,
+                            referencedTable: $$SessionsTableReferences
+                                ._employeeIdTable(db),
+                            referencedColumn:
+                                $$SessionsTableReferences
+                                    ._employeeIdTable(db)
+                                    .id,
+                          )
+                          as T;
+                }
+                if (activityTypeId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.activityTypeId,
+                            referencedTable: $$SessionsTableReferences
+                                ._activityTypeIdTable(db),
+                            referencedColumn:
+                                $$SessionsTableReferences
+                                    ._activityTypeIdTable(db)
+                                    .id,
+                          )
+                          as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SessionsTable,
+      Session,
+      $$SessionsTableFilterComposer,
+      $$SessionsTableOrderingComposer,
+      $$SessionsTableAnnotationComposer,
+      $$SessionsTableCreateCompanionBuilder,
+      $$SessionsTableUpdateCompanionBuilder,
+      (Session, $$SessionsTableReferences),
+      Session,
+      PrefetchHooks Function({
+        bool childId,
+        bool employeeId,
+        bool activityTypeId,
+      })
+    >;
+typedef $$PaymentsTableCreateCompanionBuilder =
+    PaymentsCompanion Function({
+      Value<int> id,
+      required int clientId,
+      required DateTime paymentDate,
+      required double amount,
+      required String type,
+      required int sessionCount,
+      Value<int> usedSessions,
+    });
+typedef $$PaymentsTableUpdateCompanionBuilder =
+    PaymentsCompanion Function({
+      Value<int> id,
+      Value<int> clientId,
+      Value<DateTime> paymentDate,
+      Value<double> amount,
+      Value<String> type,
+      Value<int> sessionCount,
+      Value<int> usedSessions,
+    });
+
+final class $$PaymentsTableReferences
+    extends BaseReferences<_$AppDatabase, $PaymentsTable, Payment> {
+  $$PaymentsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ChildrenTable _clientIdTable(_$AppDatabase db) => db.children
+      .createAlias($_aliasNameGenerator(db.payments.clientId, db.children.id));
+
+  $$ChildrenTableProcessedTableManager get clientId {
+    final $_column = $_itemColumn<int>('client_id')!;
+
+    final manager = $$ChildrenTableTableManager(
+      $_db,
+      $_db.children,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_clientIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PaymentsTableFilterComposer
+    extends Composer<_$AppDatabase, $PaymentsTable> {
+  $$PaymentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get usedSessions => $composableBuilder(
+    column: $table.usedSessions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ChildrenTableFilterComposer get clientId {
+    final $$ChildrenTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.clientId,
+      referencedTable: $db.children,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChildrenTableFilterComposer(
+            $db: $db,
+            $table: $db.children,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PaymentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PaymentsTable> {
+  $$PaymentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get usedSessions => $composableBuilder(
+    column: $table.usedSessions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ChildrenTableOrderingComposer get clientId {
+    final $$ChildrenTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.clientId,
+      referencedTable: $db.children,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChildrenTableOrderingComposer(
+            $db: $db,
+            $table: $db.children,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PaymentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PaymentsTable> {
+  $$PaymentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get usedSessions => $composableBuilder(
+    column: $table.usedSessions,
+    builder: (column) => column,
+  );
+
+  $$ChildrenTableAnnotationComposer get clientId {
     final $$ChildrenTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.childId,
+      getCurrentColumn: (t) => t.clientId,
       referencedTable: $db.children,
       getReferencedColumn: (t) => t.id,
       builder:
@@ -3690,79 +4805,67 @@ class $$SessionsTableAnnotationComposer
   }
 }
 
-class $$SessionsTableTableManager
+class $$PaymentsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $SessionsTable,
-          SessionEntry,
-          $$SessionsTableFilterComposer,
-          $$SessionsTableOrderingComposer,
-          $$SessionsTableAnnotationComposer,
-          $$SessionsTableCreateCompanionBuilder,
-          $$SessionsTableUpdateCompanionBuilder,
-          (SessionEntry, $$SessionsTableReferences),
-          SessionEntry,
-          PrefetchHooks Function({
-            bool activityTypeId,
-            bool employeeId,
-            bool childId,
-          })
+          $PaymentsTable,
+          Payment,
+          $$PaymentsTableFilterComposer,
+          $$PaymentsTableOrderingComposer,
+          $$PaymentsTableAnnotationComposer,
+          $$PaymentsTableCreateCompanionBuilder,
+          $$PaymentsTableUpdateCompanionBuilder,
+          (Payment, $$PaymentsTableReferences),
+          Payment,
+          PrefetchHooks Function({bool clientId})
         > {
-  $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
+  $$PaymentsTableTableManager(_$AppDatabase db, $PaymentsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer:
-              () => $$SessionsTableFilterComposer($db: db, $table: table),
+              () => $$PaymentsTableFilterComposer($db: db, $table: table),
           createOrderingComposer:
-              () => $$SessionsTableOrderingComposer($db: db, $table: table),
+              () => $$PaymentsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer:
-              () => $$SessionsTableAnnotationComposer($db: db, $table: table),
+              () => $$PaymentsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<DateTime> sessionDateTime = const Value.absent(),
-                Value<int> durationMinutes = const Value.absent(),
-                Value<double> price = const Value.absent(),
-                Value<bool> isCompleted = const Value.absent(),
-                Value<String?> notes = const Value.absent(),
-                Value<int> activityTypeId = const Value.absent(),
-                Value<int> employeeId = const Value.absent(),
-                Value<int> childId = const Value.absent(),
-              }) => SessionsCompanion(
+                Value<int> clientId = const Value.absent(),
+                Value<DateTime> paymentDate = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<int> sessionCount = const Value.absent(),
+                Value<int> usedSessions = const Value.absent(),
+              }) => PaymentsCompanion(
                 id: id,
-                sessionDateTime: sessionDateTime,
-                durationMinutes: durationMinutes,
-                price: price,
-                isCompleted: isCompleted,
-                notes: notes,
-                activityTypeId: activityTypeId,
-                employeeId: employeeId,
-                childId: childId,
+                clientId: clientId,
+                paymentDate: paymentDate,
+                amount: amount,
+                type: type,
+                sessionCount: sessionCount,
+                usedSessions: usedSessions,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required DateTime sessionDateTime,
-                required int durationMinutes,
-                required double price,
-                Value<bool> isCompleted = const Value.absent(),
-                Value<String?> notes = const Value.absent(),
-                required int activityTypeId,
-                required int employeeId,
-                required int childId,
-              }) => SessionsCompanion.insert(
+                required int clientId,
+                required DateTime paymentDate,
+                required double amount,
+                required String type,
+                required int sessionCount,
+                Value<int> usedSessions = const Value.absent(),
+              }) => PaymentsCompanion.insert(
                 id: id,
-                sessionDateTime: sessionDateTime,
-                durationMinutes: durationMinutes,
-                price: price,
-                isCompleted: isCompleted,
-                notes: notes,
-                activityTypeId: activityTypeId,
-                employeeId: employeeId,
-                childId: childId,
+                clientId: clientId,
+                paymentDate: paymentDate,
+                amount: amount,
+                type: type,
+                sessionCount: sessionCount,
+                usedSessions: usedSessions,
               ),
           withReferenceMapper:
               (p0) =>
@@ -3770,15 +4873,11 @@ class $$SessionsTableTableManager
                       .map(
                         (e) => (
                           e.readTable(table),
-                          $$SessionsTableReferences(db, table, e),
+                          $$PaymentsTableReferences(db, table, e),
                         ),
                       )
                       .toList(),
-          prefetchHooksCallback: ({
-            activityTypeId = false,
-            employeeId = false,
-            childId = false,
-          }) {
+          prefetchHooksCallback: ({clientId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -3797,43 +4896,15 @@ class $$SessionsTableTableManager
                   dynamic
                 >
               >(state) {
-                if (activityTypeId) {
+                if (clientId) {
                   state =
                       state.withJoin(
                             currentTable: table,
-                            currentColumn: table.activityTypeId,
-                            referencedTable: $$SessionsTableReferences
-                                ._activityTypeIdTable(db),
+                            currentColumn: table.clientId,
+                            referencedTable: $$PaymentsTableReferences
+                                ._clientIdTable(db),
                             referencedColumn:
-                                $$SessionsTableReferences
-                                    ._activityTypeIdTable(db)
-                                    .id,
-                          )
-                          as T;
-                }
-                if (employeeId) {
-                  state =
-                      state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.employeeId,
-                            referencedTable: $$SessionsTableReferences
-                                ._employeeIdTable(db),
-                            referencedColumn:
-                                $$SessionsTableReferences
-                                    ._employeeIdTable(db)
-                                    .id,
-                          )
-                          as T;
-                }
-                if (childId) {
-                  state =
-                      state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.childId,
-                            referencedTable: $$SessionsTableReferences
-                                ._childIdTable(db),
-                            referencedColumn:
-                                $$SessionsTableReferences._childIdTable(db).id,
+                                $$PaymentsTableReferences._clientIdTable(db).id,
                           )
                           as T;
                 }
@@ -3849,36 +4920,54 @@ class $$SessionsTableTableManager
       );
 }
 
-typedef $$SessionsTableProcessedTableManager =
+typedef $$PaymentsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $SessionsTable,
-      SessionEntry,
-      $$SessionsTableFilterComposer,
-      $$SessionsTableOrderingComposer,
-      $$SessionsTableAnnotationComposer,
-      $$SessionsTableCreateCompanionBuilder,
-      $$SessionsTableUpdateCompanionBuilder,
-      (SessionEntry, $$SessionsTableReferences),
-      SessionEntry,
-      PrefetchHooks Function({
-        bool activityTypeId,
-        bool employeeId,
-        bool childId,
-      })
+      $PaymentsTable,
+      Payment,
+      $$PaymentsTableFilterComposer,
+      $$PaymentsTableOrderingComposer,
+      $$PaymentsTableAnnotationComposer,
+      $$PaymentsTableCreateCompanionBuilder,
+      $$PaymentsTableUpdateCompanionBuilder,
+      (Payment, $$PaymentsTableReferences),
+      Payment,
+      PrefetchHooks Function({bool clientId})
     >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$EmployeesTableTableManager get employees =>
-      $$EmployeesTableTableManager(_db, _db.employees);
   $$ParentsTableTableManager get parents =>
       $$ParentsTableTableManager(_db, _db.parents);
   $$ChildrenTableTableManager get children =>
       $$ChildrenTableTableManager(_db, _db.children);
+  $$EmployeesTableTableManager get employees =>
+      $$EmployeesTableTableManager(_db, _db.employees);
   $$ActivityTypesTableTableManager get activityTypes =>
       $$ActivityTypesTableTableManager(_db, _db.activityTypes);
   $$SessionsTableTableManager get sessions =>
       $$SessionsTableTableManager(_db, _db.sessions);
+  $$PaymentsTableTableManager get payments =>
+      $$PaymentsTableTableManager(_db, _db.payments);
+}
+
+mixin _$ScheduleDaoMixin on DatabaseAccessor<AppDatabase> {
+  $ParentsTable get parents => attachedDatabase.parents;
+  $ChildrenTable get children => attachedDatabase.children;
+  $EmployeesTable get employees => attachedDatabase.employees;
+  $ActivityTypesTable get activityTypes => attachedDatabase.activityTypes;
+  $SessionsTable get sessions => attachedDatabase.sessions;
+}
+mixin _$ClientDaoMixin on DatabaseAccessor<AppDatabase> {
+  $ParentsTable get parents => attachedDatabase.parents;
+  $ChildrenTable get children => attachedDatabase.children;
+}
+mixin _$PaymentDaoMixin on DatabaseAccessor<AppDatabase> {
+  $ParentsTable get parents => attachedDatabase.parents;
+  $ChildrenTable get children => attachedDatabase.children;
+  $PaymentsTable get payments => attachedDatabase.payments;
+  $EmployeesTable get employees => attachedDatabase.employees;
+  $ActivityTypesTable get activityTypes => attachedDatabase.activityTypes;
+  $SessionsTable get sessions => attachedDatabase.sessions;
 }

@@ -24,9 +24,10 @@ import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_sessions_for_day.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/update_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
-import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart';
+import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart' hide GetClientSessionBalance;
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart';
 // ----------------------------------
 
 // --- Импорты для фичи Клиенты ---
@@ -109,6 +110,7 @@ Future<void> init() async {
       deleteSession: sl(),
       checkRecurringSessionConflicts: sl(), // Provide the dependency
       addMultipleSessions: sl(), // Provide the dependency
+      getClientSessionBalance: sl(),
     ),
   );
 
@@ -124,6 +126,8 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => AddMultipleSessions(sl()),
   ); // Register new use case
+
+  sl.registerLazySingleton(() => GetClientSessionBalance(sl()));
 
   // Repository
   sl.registerLazySingleton<ScheduleRepository>(

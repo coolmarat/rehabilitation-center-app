@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart'; // Для форматирования дат
 // Use the correct path for ActivityType
+
 import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
@@ -13,7 +14,7 @@ import 'package:rehabilitation_center_app/features/employees/presentation/bloc/e
 import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
 import 'package:table_calendar/table_calendar.dart'; // <-- Correct import
 import 'package:rehabilitation_center_app/shared_widgets/filterable_dropdown.dart'; // For filter dropdowns
-import '../../../../core/database/app_database.dart'; // <-- Keep direct import
+
 // import '../../../../core/models/models.dart'; // <-- Removed, use specific domain models
 import '../../domain/entities/session_details.dart'; // For SessionDetails
 import '../bloc/schedule_bloc.dart'; // <-- Keep only main BLoC import
@@ -300,7 +301,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 });
                               },
                             ),
-                        const SizedBox(height: 16.0),
                         // Child Filter
                         Text('Клиент (ребенок):', style: Theme.of(context).textTheme.titleSmall),
                         const SizedBox(height: 8.0),
@@ -776,10 +776,55 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                         setState(() {
                           _selectedChildId = child.id;
                         });
+                        context
+                            .read<ScheduleBloc>()
+                            .add(GetClientSessionBalance(child.id));
+                      },
+                      onClearSelected: () {
+                        setState(() {
+                          _selectedChildId = null;
+                        });
                       },
                       hintText: 'Ребенок',
                       // TODO: Add validation equivalent if needed
                     ),
+                    if (_selectedChildId != null)
+                      BlocBuilder<ScheduleBloc, ScheduleState>(
+                        buildWhen: (previous, current) {
+                          if (previous is ScheduleFormDataLoaded &&
+                              current is ScheduleFormDataLoaded) {
+                            return previous.isBalanceLoading !=
+                                    current.isBalanceLoading ||
+                                previous.clientSessionBalance !=
+                                    current.clientSessionBalance;
+                          }
+                          return previous.runtimeType != current.runtimeType;
+                        },
+                        builder: (context, state) {
+                          if (state is ScheduleFormDataLoaded) {
+                            if (state.isBalanceLoading) {
+                              return const Center(
+                                  child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(),
+                              ));
+                            }
+
+                            if (state.clientSessionBalance != null) {
+                              final balance = state.clientSessionBalance!;
+                              final color = balance < 0 ? Colors.red : Colors.green;
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(
+                                  'Баланс сессий клиента: $balance',
+                                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                                ),
+                              );
+                            }
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     // Выпадающий список Детей (OLD)
                     /* DropdownButtonFormField<int>(
                       value: _selectedChildId,
@@ -1069,6 +1114,10 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
         currentState is! ScheduleFormDataLoading) {
       BlocProvider.of<ScheduleBloc>(context).add(LoadScheduleFormData());
     }
+    // Запрашиваем баланс для изначально выбранного клиента
+    if (_selectedChildId != null) {
+      context.read<ScheduleBloc>().add(GetClientSessionBalance(_selectedChildId!));
+    }
   }
 
   @override
@@ -1281,6 +1330,15 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
                 setState(() {
                   _selectedChildId = child.id;
                 });
+                // Запрашиваем баланс при смене клиента
+                context
+                    .read<ScheduleBloc>()
+                    .add(GetClientSessionBalance(child.id));
+              },
+              onClearSelected: () {
+                setState(() {
+                  _selectedChildId = null;
+                });
               },
               hintText: 'Ребенок',
               initialItem: _findItemById(
@@ -1451,35 +1509,17 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
       final notes =
           _notesController.text.isNotEmpty ? _notesController.text : null;
 
-      // Создаем обновленный объект SessionEntry (Drift data class)
-      final updatedSessionEntry = SessionEntry(
+      // Создаем доменную модель Session напрямую
+      final updatedDomainSession = Session(
         id: widget.session.sessionId, // Используем ID из редактируемой сессии!
+        dateTime: dateTime,
+        duration: duration,
+        price: price,
+        isCompleted: _isPaid,
+        notes: notes,
         activityTypeId: _selectedActivityTypeId!,
         employeeId: _selectedEmployeeId!,
         childId: _selectedChildId!,
-        sessionDateTime: dateTime,
-        durationMinutes: duration.inMinutes,
-        price: price,
-        // Статус isCompleted пока не редактируем здесь
-        isCompleted: _isPaid,
-        notes: notes,
-      );
-
-      // Map SessionEntry to domain Session model
-      final updatedDomainSession = Session(
-        id: updatedSessionEntry.id, // <-- Use 'id' instead of 'sessionId'
-        dateTime: updatedSessionEntry.sessionDateTime,
-        duration: Duration(minutes: updatedSessionEntry.durationMinutes),
-        price: updatedSessionEntry.price,
-        isCompleted: updatedSessionEntry.isCompleted,
-        notes: updatedSessionEntry.notes,
-        activityTypeId: updatedSessionEntry.activityTypeId,
-        employeeId: updatedSessionEntry.employeeId,
-        childId: updatedSessionEntry.childId,
-        // Note: Domain Session might not need relationship data here
-        // employeeName: '', // Fetch if needed by BLoC
-        // activityName: '', // Fetch if needed by BLoC
-        // childName: '',    // Fetch if needed by BLoC
       );
 
       // Отправляем событие обновления в Bloc с Domain Session

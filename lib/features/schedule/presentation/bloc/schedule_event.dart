@@ -30,6 +30,16 @@ class SelectedDateChanged extends ScheduleEvent {
 // Событие для загрузки данных, необходимых для формы добавления сессии
 class LoadScheduleFormData extends ScheduleEvent {}
 
+// Событие для получения баланса занятий клиента
+class GetClientSessionBalance extends ScheduleEvent {
+  final int clientId;
+
+  const GetClientSessionBalance(this.clientId);
+
+  @override
+  List<Object> get props => [clientId];
+}
+
 // Событие для добавления новой сессии
 class AddNewSession extends ScheduleEvent {
   final DateTime dateTime;

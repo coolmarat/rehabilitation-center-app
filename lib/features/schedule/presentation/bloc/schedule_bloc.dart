@@ -17,6 +17,7 @@ import 'package:rehabilitation_center_app/features/schedule/domain/usecases/upda
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart' as gcsb;
 
 part 'schedule_event.dart';
 part 'schedule_state.dart';
@@ -27,11 +28,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   final AddSession _addSession;
   final UpdateSession _updateSession;
   final DeleteSession _deleteSession;
-  final CheckRecurringSessionConflicts
-  _checkRecurringSessionConflicts; // Add new use case
-  final AddMultipleSessions _addMultipleSessions; // Add new use case
+  final CheckRecurringSessionConflicts _checkRecurringSessionConflicts;
+  final AddMultipleSessions _addMultipleSessions;
+  final gcsb.GetClientSessionBalance _getClientSessionBalance;
 
-  // Храним текущую выбранную дату
   DateTime _selectedDate = DateTime.now();
 
   ScheduleBloc({
@@ -40,92 +40,26 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     required AddSession addSession,
     required UpdateSession updateSession,
     required DeleteSession deleteSession,
-    required CheckRecurringSessionConflicts
-    checkRecurringSessionConflicts, // Add to constructor
-    required AddMultipleSessions addMultipleSessions, // Add to constructor
-  }) : _getSessionsForDay = getSessionsForDay,
-       _getScheduleFormData = getScheduleFormData,
-       _addSession = addSession,
-       _updateSession = updateSession,
-       _deleteSession = deleteSession,
-       _checkRecurringSessionConflicts =
-           checkRecurringSessionConflicts, // Assign
-       _addMultipleSessions = addMultipleSessions, // Assign
-       super(ScheduleInitial()) {
+    required CheckRecurringSessionConflicts checkRecurringSessionConflicts,
+    required AddMultipleSessions addMultipleSessions,
+    required gcsb.GetClientSessionBalance getClientSessionBalance,
+  })  : _getSessionsForDay = getSessionsForDay,
+        _getScheduleFormData = getScheduleFormData,
+        _addSession = addSession,
+        _updateSession = updateSession,
+        _deleteSession = deleteSession,
+        _checkRecurringSessionConflicts = checkRecurringSessionConflicts,
+        _addMultipleSessions = addMultipleSessions,
+        _getClientSessionBalance = getClientSessionBalance,
+        super(ScheduleInitial()) {
     on<SelectedDateChanged>(_onSelectedDateChanged);
     on<LoadSessionsForDay>(_onLoadSessionsForDay);
     on<LoadScheduleFormData>(_onLoadScheduleFormData);
     on<AddNewSession>(_onAddNewSession);
     on<UpdateExistingSession>(_onUpdateExistingSession);
     on<DeleteExistingSession>(_onDeleteExistingSession);
-    on<AddRecurringSessions>(_onAddRecurringSessions); // Add new listener
-  }
-
-  // Handler for recurring sessions
-  Future<void> _onAddRecurringSessions(
-    AddRecurringSessions event,
-    Emitter<ScheduleState> emit,
-  ) async {
-    emit(ScheduleAdding()); // Indicate loading
-
-    try {
-      final List<DateTime> sessionDates = [];
-      for (int i = 0; i < event.numberOfSessions; i++) {
-        // Calculate the date for each recurring session (add i weeks)
-        final recurringDate = event.startDate.add(Duration(days: 7 * i));
-        // Combine date with selected time of day
-        final sessionDateTime = DateTime(
-          recurringDate.year,
-          recurringDate.month,
-          recurringDate.day,
-          event.timeOfDay.hour,
-          event.timeOfDay.minute,
-        );
-        sessionDates.add(sessionDateTime);
-      }
-
-      // Check for conflicts using the use case
-      final List<DateTime> conflictingDates =
-          await _checkRecurringSessionConflicts(
-            sessionDates,
-            event.employeeId,
-            event.childId,
-            event.durationMinutes,
-          );
-
-      if (conflictingDates.isNotEmpty) {
-        // Emit a state indicating conflicts and the list of conflicting dates
-        emit(ScheduleRecurringConflict(conflictingDates));
-        // Do NOT reload sessions here, the dialog will handle user action
-      } else {
-        // No conflicts, proceed to add sessions
-        final List<Session> newSessions =
-            sessionDates.map((dateTime) {
-              return Session(
-                id: 0, // Placeholder ID
-                dateTime: dateTime,
-                employeeId: event.employeeId,
-                activityTypeId: event.activityTypeId,
-                childId: event.childId,
-                price: event.price,
-                duration: Duration(minutes: event.durationMinutes),
-              );
-            }).toList();
-
-        // Add multiple sessions using the use case
-        await _addMultipleSessions(newSessions);
-
-        emit(ScheduleAddSuccess()); // Indicate success
-        add(LoadSessionsForDay(_selectedDate)); // Reload sessions
-      }
-    } catch (e) {
-      emit(
-        ScheduleError(
-          'Ошибка при добавлении периодических сессий: ${e.toString()}',
-        ),
-      );
-      add(LoadSessionsForDay(_selectedDate)); // Reload sessions
-    }
+    on<AddRecurringSessions>(_onAddRecurringSessions);
+    on<GetClientSessionBalance>(_onGetClientSessionBalance);
   }
 
   Future<void> _onSelectedDateChanged(
@@ -133,7 +67,6 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     Emitter<ScheduleState> emit,
   ) async {
     _selectedDate = event.selectedDate;
-    // Загружаем сессии для новой выбранной даты
     add(LoadSessionsForDay(_selectedDate));
   }
 
@@ -143,44 +76,28 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   ) async {
     emit(ScheduleLoading());
     try {
-      // Определяем диапазон дат для текущего месяца
       final startOfMonth = DateTime(event.date.year, event.date.month, 1);
       final endOfMonth = DateTime(event.date.year, event.date.month + 1, 0);
-
-      // Создаем список дат в диапазоне
       final datesInMonth = List.generate(
         endOfMonth.difference(startOfMonth).inDays + 1,
         (index) => startOfMonth.add(Duration(days: index)),
       );
-
-      // Загружаем сессии для каждой даты в месяце
       final List<List<SessionDetails>> sessionsForDates = await Future.wait(
         datesInMonth.map((date) => _getSessionsForDay(date)),
       );
-
-      // Объединяем все сессии в один список
-      final allSessionsInView =
-          sessionsForDates.expand((list) => list).toList();
-
-      // Получаем сессии только для выбранного дня
-      final sessionsForSelectedDay =
-          allSessionsInView.where((session) {
-            return isSameDay(session.dateTime, event.date);
-          }).toList();
-
+      final allSessionsInView = sessionsForDates.expand((list) => list).toList();
+      final sessionsForSelectedDay = allSessionsInView.where((session) {
+        return isSameDay(session.dateTime, event.date);
+      }).toList();
       emit(
         ScheduleLoaded(
           selectedDate: event.date,
           sessions: sessionsForSelectedDay,
-          allSessionsInView:
-              allSessionsInView, // Передаем все сессии в представлении
+          allSessionsInView: allSessionsInView,
         ),
       );
     } catch (e) {
       emit(ScheduleError('Ошибка загрузки сессий: ${e.toString()}'));
-      // Важно: после ошибки вернуть пользователя в состояние с загруженными сессиями
-      // (если они были до ошибки) или в начальное состояние
-      // Для простоты пока просто оставим ScheduleError
     }
   }
 
@@ -190,8 +107,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   ) async {
     emit(ScheduleFormDataLoading());
     try {
-      final formData = await _getScheduleFormData();
-      emit(ScheduleFormDataLoaded(formData));
+      final formData = await _getScheduleFormData.call();
+      emit(ScheduleFormDataLoaded(formData: formData));
     } catch (e) {
       emit(ScheduleError('Ошибка загрузки данных для формы: ${e.toString()}'));
     }
@@ -203,31 +120,24 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   ) async {
     emit(ScheduleAdding());
     try {
-      // Create Session domain object instead of Companion
       final newSession = Session(
-        id: 0, // Placeholder ID, DB will assign the real one
+        id: 0,
         dateTime: event.dateTime,
         employeeId: event.employeeId,
         activityTypeId: event.activityTypeId,
         childId: event.childId,
         price: event.price,
-        duration: Duration(minutes: event.durationMinutes), // Create Duration
-        // isCompleted defaults to false in the model
-        // notes are null by default
+        duration: Duration(minutes: event.durationMinutes),
       );
-      await _addSession(newSession); // Pass Session object
+      await _addSession(newSession);
       emit(ScheduleAddSuccess());
-      // После успешного добавления перезагружаем сессии для текущего дня
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
       emit(ScheduleError('Ошибка добавления сессии: ${e.toString()}'));
-      // Важно: после ошибки вернуть пользователя в состояние с загруженными сессиями
-      // чтобы UI не оставался в состоянии ScheduleAdding или ScheduleError навсегда
       add(LoadSessionsForDay(_selectedDate));
     }
   }
 
-  // Handler for updating a session
   Future<void> _onUpdateExistingSession(
     UpdateExistingSession event,
     Emitter<ScheduleState> emit,
@@ -236,16 +146,13 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     try {
       await _updateSession(event.updatedSession);
       emit(ScheduleUpdateSuccess());
-      // Reload sessions for the current day
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
       emit(ScheduleError('Ошибка обновления сессии: ${e.toString()}'));
-      // Reload sessions even after error to reflect current state
       add(LoadSessionsForDay(_selectedDate));
     }
   }
 
-  // Handler for deleting a session
   Future<void> _onDeleteExistingSession(
     DeleteExistingSession event,
     Emitter<ScheduleState> emit,
@@ -254,12 +161,81 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     try {
       await _deleteSession(event.sessionId);
       emit(ScheduleDeleteSuccess());
-      // Reload sessions for the current day
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
       emit(ScheduleError('Ошибка удаления сессии: ${e.toString()}'));
-      // Reload sessions even after error to reflect current state
       add(LoadSessionsForDay(_selectedDate));
+    }
+  }
+
+  Future<void> _onAddRecurringSessions(
+    AddRecurringSessions event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    emit(ScheduleAdding());
+    try {
+      final List<DateTime> sessionDates = [];
+      for (int i = 0; i < event.numberOfSessions; i++) {
+        final recurringDate = event.startDate.add(Duration(days: 7 * i));
+        final sessionDateTime = DateTime(
+          recurringDate.year,
+          recurringDate.month,
+          recurringDate.day,
+          event.timeOfDay.hour,
+          event.timeOfDay.minute,
+        );
+        sessionDates.add(sessionDateTime);
+      }
+      final List<DateTime> conflictingDates = await _checkRecurringSessionConflicts(
+        sessionDates,
+        event.employeeId,
+        event.childId,
+        event.durationMinutes,
+      );
+      if (conflictingDates.isNotEmpty) {
+        emit(ScheduleRecurringConflict(conflictingDates));
+      } else {
+        final List<Session> newSessions = sessionDates.map((dateTime) {
+          return Session(
+            id: 0,
+            activityTypeId: event.activityTypeId,
+            employeeId: event.employeeId,
+            childId: event.childId,
+            dateTime: dateTime,
+            duration: Duration(minutes: event.durationMinutes),
+            price: event.price,
+            isCompleted: false,
+          );
+        }).toList();
+        await _addMultipleSessions(newSessions);
+        emit(ScheduleAddSuccess());
+        add(LoadSessionsForDay(_selectedDate));
+      }
+    } catch (e) {
+      emit(ScheduleError(e.toString()));
+    }
+  }
+
+  Future<void> _onGetClientSessionBalance(
+    GetClientSessionBalance event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    if (state is ScheduleFormDataLoaded) {
+      final currentState = state as ScheduleFormDataLoaded;
+      emit(currentState.copyWith(isBalanceLoading: true, clientSessionBalance: null));
+      try {
+        final balance = await _getClientSessionBalance(event.clientId);
+        if (state is ScheduleFormDataLoaded) {
+          emit((state as ScheduleFormDataLoaded).copyWith(
+            clientSessionBalance: balance,
+            isBalanceLoading: false,
+          ));
+        }
+      } catch (e) {
+        if (state is ScheduleFormDataLoaded) {
+          emit((state as ScheduleFormDataLoaded).copyWith(isBalanceLoading: false));
+        }
+      }
     }
   }
 }

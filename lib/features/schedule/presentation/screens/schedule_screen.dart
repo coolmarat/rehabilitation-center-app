@@ -405,6 +405,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       final session = displayedSessions[index];
                       // TODO: Replace with a proper SessionListTile widget
                       return ListTile(
+                        tileColor: !session.isPaid ? Colors.pink[50] : null,
                         title: Text(
                           '${DateFormat('HH:mm').format(session.dateTime)} - ${session.activityTypeName}',
                         ),
@@ -711,6 +712,7 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                       MainAxisSize.min, // Чтобы диалог не растягивался
                   children: [
                     ListTile(
+
                       title: Text(
                         'Время: ${_selectedTime?.format(context) ?? 'Не выбрано'}',
                       ),

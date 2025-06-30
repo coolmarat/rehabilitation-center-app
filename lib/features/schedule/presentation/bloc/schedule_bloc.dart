@@ -69,6 +69,12 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     on<AddRecurringSessions>(_onAddRecurringSessions);
     on<GetClientSessionBalance>(_onGetClientSessionBalance);
     on<DeductPaymentFromBalance>(_onDeductPaymentFromBalance);
+    
+    // New event handlers for business logic moved from screen
+    on<FilterSessionsForDay>(_onFilterSessionsForDay);
+    on<GetParentForChild>(_onGetParentForChild);
+    on<UpdateSessionFieldsFromActivity>(_onUpdateSessionFieldsFromActivity);
+    on<ProcessPaymentConfirmation>(_onProcessPaymentConfirmation);
   }
 
   Future<void> _onSelectedDateChanged(
@@ -313,6 +319,141 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
       if (!emit.isDone) {
         emit(ScheduleError('Ошибка обновления баланса: ${e.toString()}'));
       }
+    }
+  }
+
+  // Фильтрация сессий для конкретного дня с учетом выбранного сотрудника и ребенка
+  Future<void> _onFilterSessionsForDay(
+    FilterSessionsForDay event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    try {
+      // Получаем текущее состояние, чтобы иметь доступ к списку всех сессий
+      if (state is ScheduleLoaded) {
+        final currentState = state as ScheduleLoaded;
+        List<SessionDetails> sessionsForDay = currentState.allSessionsInView
+            .where((session) => isSameDay(session.dateTime, event.day))
+            .toList();
+
+        // Применяем фильтр по сотруднику, если выбран
+        if (event.employeeId != null) {
+          sessionsForDay = sessionsForDay
+              .where((session) => session.employeeId == event.employeeId)
+              .toList();
+        }
+
+        // Применяем фильтр по ребенку, если выбран
+        if (event.childId != null) {
+          sessionsForDay = sessionsForDay
+              .where((session) => session.childId == event.childId)
+              .toList();
+        }
+
+        // Отправляем отфильтрованные сессии
+        emit(FilteredSessionsState(
+          day: event.day,
+          sessions: sessionsForDay,
+          filteredEmployeeId: event.employeeId,
+          filteredChildId: event.childId,
+        ));
+      }
+    } catch (e) {
+      emit(ScheduleError('Ошибка фильтрации сессий: ${e.toString()}'));
+    }
+  }
+
+  // Получение данных о родителе по ID ребенка
+  Future<void> _onGetParentForChild(
+    GetParentForChild event, 
+    Emitter<ScheduleState> emit,
+  ) async {
+    emit(ParentDataLoading());
+    try {
+      // Получаем ID родителя по ID ребенка
+      final parentIdEither = await _getParentIdByChildId(event.childId);
+      
+      await parentIdEither.fold(
+        (failure) {
+          emit(ScheduleError('Не удалось найти родителя: $failure'));
+        },
+        (parentId) async {
+          // Здесь бы получать данные о родителе, включая баланс
+          // Но так как это перенос существующего кода, просто используем
+          // уже имеющийся метод получения баланса клиента
+          final balance = await _getClientSessionBalance(event.childId);
+          
+          emit(ParentDataLoaded(
+            parentId: parentId,
+            parentBalance: balance.toDouble(),
+          ));
+        },
+      );
+    } catch (e) {
+      emit(ScheduleError('Ошибка получения данных родителя: ${e.toString()}'));
+    }
+  }
+
+  // Обновление полей сессии (цена и длительность) на основе выбранного типа активности
+  Future<void> _onUpdateSessionFieldsFromActivity(
+    UpdateSessionFieldsFromActivity event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    try {
+      // Для этого нам нужны данные формы с типами активности
+      if (state is ScheduleFormDataLoaded) {
+        final currentState = state as ScheduleFormDataLoaded;
+        // Ищем выбранный тип активности
+        final selectedActivity = currentState.formData.activityTypes.firstWhere(
+          (activity) => activity.id == event.activityTypeId,
+          orElse: () => throw Exception('Тип активности не найден'),
+        );
+        
+        // Отправляем состояние с ценой и длительностью
+        emit(ActivityFieldsState(
+          price: selectedActivity.defaultPrice,
+          durationMinutes: selectedActivity.durationInMinutes,
+        ));
+        
+        // Возвращаем состояние формы для дальнейшей работы
+        emit(currentState);
+      } else {
+        emit(ScheduleError('Данные формы не загружены'));
+      }
+    } catch (e) {
+      emit(ScheduleError('Ошибка обновления полей: ${e.toString()}'));
+    }
+  }
+
+  // Обработка подтверждения оплаты
+  Future<void> _onProcessPaymentConfirmation(
+    ProcessPaymentConfirmation event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    try {
+      // Получаем ID родителя по ID ребенка
+      final parentIdEither = await _getParentIdByChildId(event.childId);
+      
+      await parentIdEither.fold(
+        (failure) {
+          emit(ScheduleError('Не удалось найти родителя для подтверждения оплаты: $failure'));
+        },
+        (parentId) async {
+          // Запрашиваем актуальный баланс
+          final balance = await _getClientSessionBalance(event.childId);
+          final currentBalance = balance.toDouble();
+          final newBalance = currentBalance - event.sessionPrice;
+          
+          // Отправляем состояние для диалога подтверждения
+          emit(PaymentConfirmationState(
+            childId: event.childId,
+            currentBalance: currentBalance,
+            sessionPrice: event.sessionPrice,
+            newBalance: newBalance,
+          ));
+        },
+      );
+    } catch (e) {
+      emit(ScheduleError('Ошибка обработки подтверждения оплаты: ${e.toString()}'));
     }
   }
 }

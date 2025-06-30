@@ -99,3 +99,71 @@ class ScheduleRecurringConflict extends ScheduleState {
   @override
   List<Object?> get props => [conflictingDates];
 }
+
+// Состояние, связанное с родителями
+class ParentDataLoading extends ScheduleState {}
+
+class ParentDataLoaded extends ScheduleState {
+  final int parentId;
+  final double parentBalance;
+  
+  const ParentDataLoaded({
+    required this.parentId,
+    required this.parentBalance,
+  });
+  
+  @override
+  List<Object?> get props => [parentId, parentBalance];
+}
+
+// Состояние обработки оплаты
+class PaymentProcessing extends ScheduleState {}
+
+class PaymentConfirmationState extends ScheduleState {
+  final int childId;
+  final double currentBalance;
+  final double sessionPrice;
+  final double newBalance;
+  
+  const PaymentConfirmationState({
+    required this.childId,
+    required this.currentBalance,
+    required this.sessionPrice,
+    required this.newBalance,
+  });
+  
+  @override
+  List<Object?> get props => [childId, currentBalance, sessionPrice, newBalance];
+}
+
+// Состояние обновления полей на основе типа активности
+class ActivityFieldsState extends ScheduleState {
+  final double price;
+  final int durationMinutes;
+  
+  const ActivityFieldsState({
+    required this.price,
+    required this.durationMinutes,
+  });
+  
+  @override
+  List<Object?> get props => [price, durationMinutes];
+}
+
+// Состояние отфильтрованных сеансов
+class FilteredSessionsState extends ScheduleState {
+  final DateTime day;
+  final List<SessionDetails> sessions;
+  final int? filteredEmployeeId;
+  final int? filteredChildId;
+  
+  const FilteredSessionsState({
+    required this.day,
+    required this.sessions,
+    this.filteredEmployeeId,
+    this.filteredChildId,
+  });
+  
+  @override
+  List<Object?> get props => [day, sessions, filteredEmployeeId, filteredChildId];
+}

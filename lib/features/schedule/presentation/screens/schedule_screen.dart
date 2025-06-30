@@ -8,7 +8,7 @@ import 'package:intl/intl.dart'; // Для форматирования дат
 import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
 // Domain models
-import 'package:rehabilitation_center_app/features/clients/domain/parent.dart'; // Для типа Parent
+// Parent import удален, т.к. логика перенесена в BLoC // Для типа Parent
 import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart'; // Включает ClientState и ClientStatus
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
 // BLoCs imports
@@ -31,8 +31,6 @@ class ScheduleScreen extends StatefulWidget {
 class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  List<SessionDetails> _sessions =
-      []; // Добавляем переменную для хранения сессий
 
   // Filter state variables
   Employee? _selectedEmployee;
@@ -61,38 +59,72 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     ); // Replace with your actual event
   }
 
-  // Метод для получения сессий для конкретного дня
+  // Получение списка сессий для выбранного дня.
+  // Выполняем фильтрацию синхронно на основе текущего состояния BLoC,
+  // чтобы сразу показать актуальные данные без задержек.
   List<SessionDetails> _getSessionsForDay(DateTime day) {
-    final state = BlocProvider.of<ScheduleBloc>(context).state;
-    if (state is ScheduleLoaded) {
-      List<SessionDetails> sessionsForDay =
-          state.allSessionsInView.where((session) {
-            return isSameDay(session.dateTime, day);
-          }).toList();
+    final blocState = context.read<ScheduleBloc>().state;
 
-      // Apply employee filter if an employee is selected
-      if (_selectedEmployee != null) {
-        sessionsForDay =
-            sessionsForDay.where((session) {
-              return session.employeeId ==
-                  _selectedEmployee!
-                      .id; // Ensure your SessionDetails has employeeId and Employee has id
-            }).toList();
-      }
-
-      // Apply child filter if a child is selected
-      if (_selectedChild != null) {
-        sessionsForDay =
-            sessionsForDay.where((session) {
-              return session.childId ==
-                  _selectedChild!
-                      .id; // Ensure your SessionDetails has childId and Child has id
-            }).toList();
-      }
-
-      return sessionsForDay;
+    List<SessionDetails> sourceSessions = [];
+    if (blocState is ScheduleLoaded) {
+      sourceSessions = blocState.allSessionsInView;
+    } else if (blocState is FilteredSessionsState) {
+      sourceSessions = blocState.sessions;
     }
-    return [];
+
+    // Фильтруем по конкретному дню
+    var daySessions = sourceSessions
+        .where((s) => isSameDay(s.dateTime, day))
+        .toList();
+
+    // Применяем активные фильтры, если установлены
+    if (_selectedEmployee != null) {
+      daySessions = daySessions
+          .where((s) => s.employeeId == _selectedEmployee!.id)
+          .toList();
+    }
+    if (_selectedChild != null) {
+      daySessions = daySessions
+          .where((s) => s.childId == _selectedChild!.id)
+          .toList();
+    }
+
+    return daySessions;
+  }
+  
+  // Метод, который TableCalendar использует для отображения индикаторов
+  // Он синхронно возвращает список сессий для конкретного дня из текущего состояния BLoC.
+  // Никаких событий здесь не диспатчим, чтобы не вызывать лишних перестроений.
+  List<SessionDetails> _getSessionsForCalendarDay(DateTime day) {
+    final blocState = context.read<ScheduleBloc>().state;
+
+    List<SessionDetails> sourceSessions = [];
+    if (blocState is ScheduleLoaded) {
+      // Используем allSessionsInView, чтобы иметь данные по всему месяцу
+      sourceSessions = blocState.allSessionsInView;
+    } else if (blocState is FilteredSessionsState) {
+      // Если отображается конкретный день после фильтрации, markers тоже нужны
+      sourceSessions = blocState.sessions;
+    }
+
+    // Фильтруем по дню
+    var daySessions = sourceSessions
+        .where((s) => isSameDay(s.dateTime, day))
+        .toList();
+
+    // Применяем активные фильтры сотрудника и ребенка, если есть
+    if (_selectedEmployee != null) {
+      daySessions = daySessions
+          .where((s) => s.employeeId == _selectedEmployee!.id)
+          .toList();
+    }
+    if (_selectedChild != null) {
+      daySessions = daySessions
+          .where((s) => s.childId == _selectedChild!.id)
+          .toList();
+    }
+
+    return daySessions;
   }
 
   @override
@@ -209,8 +241,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             setState(() {
                               _selectedDay = selectedDay;
                               _focusedDay = focusedDay;
-                              // Update _sessions immediately for the new day with current filters
-                              _sessions = _getSessionsForDay(selectedDay);
+
                             });
                             // Trigger loading sessions for the newly selected day from the source
                             BlocProvider.of<ScheduleBloc>(
@@ -283,7 +314,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           },
                         ),
                         eventLoader:
-                            _getSessionsForDay, // Use the new method here
+                            _getSessionsForCalendarDay, // Use the calendar-specific method for markers
                       );
                     },
                   ),
@@ -316,21 +347,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               handleSelected: (Employee selectedEmployee) {
                                 setState(() {
                                   _selectedEmployee = selectedEmployee;
-                                  if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(
-                                      _selectedDay!,
-                                    );
-                                  }
+
                                 });
                               },
                               onClearSelected: () {
                                 setState(() {
                                   _selectedEmployee = null;
-                                  if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(
-                                      _selectedDay!,
-                                    );
-                                  }
+
                                 });
                               },
                             ),
@@ -351,21 +374,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               handleSelected: (Child selectedChild) {
                                 setState(() {
                                   _selectedChild = selectedChild;
-                                  if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(
-                                      _selectedDay!,
-                                    );
-                                  }
+
                                 });
                               },
                               onClearSelected: () {
                                 setState(() {
                                   _selectedChild = null;
-                                  if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(
-                                      _selectedDay!,
-                                    );
-                                  }
+
                                 });
                               },
                             ),
@@ -381,22 +396,27 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               // Use Expanded to take remaining space
               child: BlocBuilder<ScheduleBloc, ScheduleState>(
                 builder: (context, state) {
-                  // _sessions is now managed by _onDaySelected and filter changes.
-                  // This BlocBuilder ensures UI rebuilds on ScheduleBloc state changes.
-
-                  if (state is ScheduleLoading) {
+                  // Формируем список сессий для отображения
+                  List<SessionDetails> displayedSessions = [];
+                  if (state is ScheduleLoaded) {
+                    final DateTime dayForList = _selectedDay ?? state.selectedDate;
+                    displayedSessions = _getSessionsForDay(dayForList);
+                  } else if (state is FilteredSessionsState) {
+                    displayedSessions = state.sessions;
+                  } else if (state is ScheduleLoading) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (_sessions.isEmpty) {
-                    // Если сохраненный список сессий пуст (и не в состоянии загрузки)
+                  }
+
+                  if (displayedSessions.isEmpty) {
                     return const Center(
                       child: Text('Нет записей на выбранный день.'),
                     );
                   }
-                  // Build the list of sessions using the saved list
+                  // Build the list of sessions using the computed list
                   return ListView.builder(
-                    itemCount: _sessions.length,
+                    itemCount: displayedSessions.length,
                     itemBuilder: (context, index) {
-                      final session = _sessions[index];
+                      final session = displayedSessions[index];
                       // TODO: Replace with a proper SessionListTile widget
                       return ListTile(
                         title: Text(
@@ -1385,23 +1405,55 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
   double _sessionPriceForDeduction = 0.0;
 
   // Показать диалог подтверждения оплаты
-  void _showPaymentConfirmationDialog() async {
+  Future<void> _showPaymentConfirmationDialog() async {
     if (_selectedChildId == null) return;
 
-    // Получаем актуальный баланс родителя из ClientBloc
-    // Сначала получаем parent ID через ChildId
-    final parentId = await _getParentIdForChild(_selectedChildId!);
-    if (parentId == null) return;
-
-    // Затем получаем родителя чтобы узнать его актуальный баланс
-    final parent = await _getParentById(parentId);
-    if (parent == null) return;
-
-    // Получаем стоимость занятия и используем актуальный баланс из parent модели, как в clients_screen
-    await _proceedWithPaymentDialog(
-      parent.balance,
-      widget.session.price.toInt(),
-    );
+    // Делегируем обработку оплаты в BLoC
+    final scheduleBloc = BlocProvider.of<ScheduleBloc>(context);
+    
+    // Отправляем событие для обработки подтверждения оплаты
+    scheduleBloc.add(ProcessPaymentConfirmation(
+      childId: _selectedChildId!,
+      sessionPrice: widget.session.price.toDouble(),
+    ));
+    
+    // Подписываемся на изменения состояния для обработки результата
+    final completer = Completer<void>();
+    final subscription = scheduleBloc.stream.listen((state) {
+      if (state is PaymentConfirmationState) {
+        // Отображаем диалог с полученными данными
+        _proceedWithPaymentDialog(
+          state.currentBalance,
+          state.sessionPrice.toInt(),
+        ).then((_) => completer.complete());
+      } else if (state is ScheduleError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка: ${state.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        completer.complete();
+      }
+    });
+    
+    try {
+      // Ждем завершения диалога
+      await completer.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Тайм-аут при обработке оплаты'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        },
+      );
+    } finally {
+      // Очищаем подписку
+      await subscription.cancel();
+    }
   }
 
   Future<void> _proceedWithPaymentDialog(
@@ -1538,139 +1590,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     }
   }
 
-  // Helper method to get parent ID for a child
-  Future<int?> _getParentIdForChild(int childId) async {
-    try {
-      // Get parent ID using ClientBloc
-      final clientBloc = context.read<ClientBloc>();
-      final currentState = clientBloc.state;
-
-      // First check if we already have parent info in state - check if status is success
-      if (currentState.status == ClientStatus.success) {
-        // Find child in all loaded parent-children pairs
-        for (final entry in currentState.parentsWithChildren.entries) {
-          for (final child in entry.value) {
-            if (child.id == childId) {
-              return child.parentId;
-            }
-          }
-        }
-        // If we reach here, child was not found
-        throw Exception('Child not found');
-      } else {
-        // Load parent ID if not available
-        // This would typically be done via a repository or use case
-        // For now, let's use a simplified approach by dispatching a load event
-        // and waiting for the result
-        return await _getParentIdFromDatabase(childId);
-      }
-    } catch (e) {
-      print('Error getting parent ID: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: Не удалось получить ID родителя: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return null;
-    }
-  }
-
-  // Method to query database directly for parent ID
-  Future<int?> _getParentIdFromDatabase(int childId) async {
-    try {
-      // Instead of dispatching events, just use the existing Bloc state
-      // or repository methods if needed
-      final clientBloc = context.read<ClientBloc>();
-      final currentState = clientBloc.state;
-
-      // If ClientBloc already has data, search through it
-      if (currentState.status == ClientStatus.success) {
-        for (final entry in currentState.parentsWithChildren.entries) {
-          for (final child in entry.value) {
-            if (child.id == childId) {
-              return child.parentId;
-            }
-          }
-        }
-      }
-
-      // If not found or data not loaded, return null and handle in the caller
-      return null;
-    } catch (e) {
-      print('Database error getting parent ID: $e');
-      return null;
-    }
-  }
-
-  // Helper method to get parent by ID
-  Future<Parent?> _getParentById(int parentId) async {
-    try {
-      // Use ClientBloc or repository to get parent
-      final clientBloc = context.read<ClientBloc>();
-      final currentState = clientBloc.state;
-
-      // Check if we already have parent loaded
-      if (currentState.status == ClientStatus.success) {
-        // Look through all parents
-        for (final parent in currentState.parentsWithChildren.keys) {
-          if (parent.id == parentId) {
-            return parent;
-          }
-        }
-        // Parent not found in current state, need to load from database
-        return await _getParentFromDatabase(parentId);
-      } else {
-        // Need to load from database
-        return await _getParentFromDatabase(parentId);
-      }
-    } catch (e) {
-      print('Error getting parent: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: Не удалось получить данные родителя: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return null;
-    }
-  }
-
-  // Method to query database directly for parent
-  Future<Parent?> _getParentFromDatabase(int parentId) async {
-    try {
-      // Instead of dispatching events, just use the existing Bloc state
-      final clientBloc = context.read<ClientBloc>();
-      final currentState = clientBloc.state;
-
-      // If ClientBloc already has data, search through it
-      if (currentState.status == ClientStatus.success) {
-        for (final parent in currentState.parentsWithChildren.keys) {
-          if (parent.id == parentId) {
-            return parent;
-          }
-        }
-      }
-
-      // If parent not found but we have some other data about the parent in the schedule bloc
-      final scheduleState = context.read<ScheduleBloc>().state;
-      if (scheduleState is ScheduleFormDataLoaded &&
-          scheduleState.clientSessionBalance != null) {
-        // Use the balance from ScheduleBloc state as a fallback
-        // Create a minimal Parent object with just the data we need
-        return Parent(
-          id: parentId,
-          fullName: 'Родитель', // Default name
-          balance: scheduleState.clientSessionBalance!.toDouble(),
-          phoneNumber: '', // Empty placeholder
-        );
-      }
-
-      // Return null if no data available
-      return null;
-    } catch (e) {
-      print('Database error getting parent: $e');
-      return null;
-    }
-  }
+  // Note: Parent-related methods have been moved to BLoC
+  // If parent data is needed, use BlocBuilder<ScheduleBloc, ScheduleState>
+  // and handle the ParentDataLoaded state
 }

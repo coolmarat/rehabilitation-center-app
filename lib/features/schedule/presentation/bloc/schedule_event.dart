@@ -137,3 +137,56 @@ class AddRecurringSessions extends ScheduleEvent {
     numberOfSessions,
   ];
 }
+
+// Событие для фильтрации сеансов по дате, сотруднику и клиенту
+class FilterSessionsForDay extends ScheduleEvent {
+  final DateTime day;
+  final int? employeeId;
+  final int? childId;
+
+  const FilterSessionsForDay({
+    required this.day,
+    this.employeeId,
+    this.childId,
+  });
+
+  @override
+  List<Object> get props => [day];
+
+  // This is not overriding anything, just adding extra functionality
+  List<Object?> get propList => [day, employeeId, childId];
+}
+
+// Событие для получения родительских данных по идентификатору ребенка
+class GetParentForChild extends ScheduleEvent {
+  final int childId;
+
+  const GetParentForChild(this.childId);
+
+  @override
+  List<Object> get props => [childId];
+}
+
+// Событие для обновления полей сессии на основе выбранного типа активности
+class UpdateSessionFieldsFromActivity extends ScheduleEvent {
+  final int activityTypeId;
+
+  const UpdateSessionFieldsFromActivity(this.activityTypeId);
+
+  @override
+  List<Object> get props => [activityTypeId];
+}
+
+// Событие для обработки подтверждения оплаты
+class ProcessPaymentConfirmation extends ScheduleEvent {
+  final int childId;
+  final double sessionPrice;
+  
+  const ProcessPaymentConfirmation({
+    required this.childId,
+    required this.sessionPrice,
+  });
+
+  @override
+  List<Object> get props => [childId, sessionPrice];
+}

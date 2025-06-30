@@ -252,11 +252,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         calendarFormat:
                             CalendarFormat.month, // Or week, twoWeeks
                         onPageChanged: (focusedDay) {
-                          // No need to call `setState()` here, `focusedDay` is handled internally
-                          // You might want to load data if your logic requires pre-fetching for pages
-                          _focusedDay =
-                              focusedDay; // Keep track of focused day if needed elsewhere
-                        },
+                           // Update the locally stored focused day so other widgets relying on it stay in sync
+                           setState(() {
+                             _focusedDay = focusedDay;
+                           });
+                           // Pre-load sessions for the newly visible month so that markers are shown
+                           BlocProvider.of<ScheduleBloc>(context).add(
+                             LoadSessionsForDay(focusedDay),
+                           );
+                         },
                         // Add other customizations as needed (header style, day builders, etc.)
                         headerStyle: HeaderStyle(
                           formatButtonVisible:

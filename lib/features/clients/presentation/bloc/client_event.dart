@@ -51,19 +51,26 @@ class DeleteChildRequested extends ClientEvent {
   final int childId;
   const DeleteChildRequested(this.childId);
   @override
-  List<Object> get props => [childId];
+  List<Object?> get props => [childId];
 }
 
-// Новое событие для очистки сообщения
-class ClearClientMessage extends ClientEvent {
-  const ClearClientMessage();
+// Событие для пополнения баланса
+class TopUpBalance extends ClientEvent {
+  final int parentId;
+  final double amount;
+
+  const TopUpBalance({required this.parentId, required this.amount});
+
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [parentId, amount];
 }
 
-// Событие изменения поискового запроса
+// События для UI
+class ClearClientMessage extends ClientEvent {}
+
 class SearchQueryChanged extends ClientEvent {
   final String query;
+
   const SearchQueryChanged(this.query);
 
   @override

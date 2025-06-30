@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:rehabilitation_center_app/core/widgets/confirmation_dialog.dart';
 // import 'package:rehabilitation_center_app/features/clients/domain/parent.dart'; // Удаляем неиспользуемый импорт
+import 'package:rehabilitation_center_app/features/clients/domain/parent.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/di/client_dependencies.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/widgets/child_form_dialog.dart';
@@ -105,6 +106,77 @@ class _ClientsScreenState extends State<ClientsScreen> {
     }
   }
 
+  Future<void> _showTopUpDialog(BuildContext context, Parent parent) async {
+    final amountController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Пополнить баланс для ${parent.fullName}'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: ListBody(
+                children: <Widget>[
+                  Text('Текущий баланс: ${parent.balance.toStringAsFixed(2)} руб.'),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Сумма пополнения',
+                      border: OutlineInputBorder(),
+                      suffixText: 'руб.',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Введите сумму';
+                      }
+                      // Allow both comma and dot as decimal separators
+                      final amount = double.tryParse(value.replaceAll(',', '.'));
+                      if (amount == null) {
+                        return 'Некорректное число';
+                      }
+                      if (amount <= 0) {
+                        return 'Сумма должна быть больше нуля';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Отмена'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Пополнить'),
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  final amount = double.parse(amountController.text.replaceAll(',', '.'));
+                  // Use the main context to access the BLoC
+                  context.read<ClientBloc>().add(
+                        TopUpBalance(parentId: parent.id, amount: amount),
+                      );
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -189,13 +261,20 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Text(
-                                        '${parent.balance.toStringAsFixed(2)} руб.',
-                                        style: TextStyle(
-                                          color: parent.balance < 0 ? Colors.redAccent : Colors.green,
-                                          fontWeight: FontWeight.bold,
+                                    GestureDetector(
+                                      onTap: () => _showTopUpDialog(context, parent),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).splashColor,
+                                          borderRadius: BorderRadius.circular(8.0),
+                                        ),
+                                        child: Text(
+                                          '${parent.balance.toStringAsFixed(2)} руб.',
+                                          style: TextStyle(
+                                            color: parent.balance < 0 ? Colors.redAccent : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),

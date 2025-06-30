@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:rehabilitation_center_app/core/usecases/usecase.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/parent.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
@@ -9,6 +10,7 @@ import 'package:rehabilitation_center_app/features/clients/domain/usecases/delet
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
 
 part 'client_event.dart';
 part 'client_state.dart';
@@ -21,8 +23,8 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
   final AddChild _addChild;
   final UpdateChild _updateChild;
   final DeleteChild _deleteChild;
+  final UpdateParentBalance _updateParentBalance;
 
-  // Внутреннее поле для хранения *всех* загруженных данных
   Map<Parent, List<Child>> _allParentsWithChildren = {};
 
   ClientBloc({
@@ -33,6 +35,7 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     required AddChild addChild,
     required UpdateChild updateChild,
     required DeleteChild deleteChild,
+    required UpdateParentBalance updateParentBalance,
   })  : _getParentsWithChildren = getParentsWithChildren,
         _addParent = addParent,
         _updateParent = updateParent,
@@ -40,6 +43,7 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
         _addChild = addChild,
         _updateChild = updateChild,
         _deleteChild = deleteChild,
+        _updateParentBalance = updateParentBalance,
         super(const ClientState()) {
     on<LoadClients>(_onLoadClients);
     on<AddParentRequested>(_onAddParentRequested);
@@ -50,46 +54,62 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     on<DeleteChildRequested>(_onDeleteChildRequested);
     on<ClearClientMessage>(_onClearClientMessage);
     on<SearchQueryChanged>(_onSearchQueryChanged);
+    on<TopUpBalance>(_onTopUpBalance);
 
-    // Загружаем данные при инициализации BLoC
     add(LoadClients());
   }
 
-  Future<void> _loadData(Emitter<ClientState> emit, {String? successMessage}) async {
-    try {
-      // Загружаем все данные
-      _allParentsWithChildren = await _getParentsWithChildren();
-      // Применяем текущую фильтрацию (из state) и обновляем состояние
-      _emitFilteredState(emit, state.searchQuery, successMessage: successMessage);
-    } catch (e) {
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка загрузки данных'));
-    }
+  Future<void> _onTopUpBalance(
+    TopUpBalance event,
+    Emitter<ClientState> emit,
+  ) async {
+    emit(state.copyWith(status: ClientStatus.loading));
+    final result = await _updateParentBalance(
+      UpdateParentBalanceParams(parentId: event.parentId, amount: event.amount),
+    );
+
+    await result.fold(
+      (failure) async => emit(state.copyWith(
+        status: ClientStatus.failure,
+        errorMessage: 'Не удалось пополнить баланс: ${failure.toString()}',
+      )),
+      (_) async {
+        await _loadData(emit, successMessage: 'Баланс успешно пополнен!');
+      },
+    );
   }
 
-  // Метод для применения фильтра и обновления состояния
-  // Теперь принимает query как параметр
+  Future<void> _loadData(Emitter<ClientState> emit, {String? successMessage}) async {
+    final result = await _getParentsWithChildren(NoParams());
+    result.fold(
+      (failure) {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка загрузки данных: ${failure.toString()}',
+        ));
+      },
+      (data) {
+        _allParentsWithChildren = data;
+        _emitFilteredState(emit, state.searchQuery, successMessage: successMessage);
+      },
+    );
+  }
+
   void _emitFilteredState(Emitter<ClientState> emit, String query, {String? successMessage, ClientStatus? status}) {
     final normalizedQuery = query.toLowerCase();
     Map<Parent, List<Child>> filteredData;
-    // Сет для ID родителей, которых нужно развернуть
     Set<int> expandedIds = {};
 
     if (normalizedQuery.isEmpty) {
-      // Если запрос пуст, показываем все, разворачивать ничего не нужно
       filteredData = Map.from(_allParentsWithChildren);
     } else {
-      // Иначе фильтруем
       filteredData = {};
       _allParentsWithChildren.forEach((parent, children) {
-        // Проверяем ФИО родителя
         final parentMatches = parent.fullName.toLowerCase().contains(normalizedQuery);
-        // Проверяем ФИО хотя бы одного ребенка
         final childMatches = children.any((child) => child.fullName.toLowerCase().contains(normalizedQuery));
 
-        // Если совпадает родитель ИЛИ хотя бы один ребенок, добавляем родителя со ВСЕМИ его детьми
         if (parentMatches || childMatches) {
           filteredData[parent] = children;
-          // Если совпадение НЕ в родителе, А ТОЛЬКО в ребенке, добавляем ID родителя для разворота
           if (!parentMatches && childMatches) {
             expandedIds.add(parent.id);
           }
@@ -97,17 +117,13 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
       });
     }
 
-    // Обновляем состояние с отфильтрованными данными и ID для разворота
     emit(state.copyWith(
-      // Используем переданный статус или текущий успешный статус
       status: status ?? ClientStatus.success,
       parentsWithChildren: filteredData,
       message: successMessage,
-      clearMessage: successMessage == null, // Очищаем, если нет нового сообщения
+      clearMessage: successMessage == null,
       clearErrorMessage: true,
-      // Передаем сет ID для разворота
       initiallyExpandedParentIds: expandedIds,
-      // Устанавливаем актуальный поисковый запрос в состояние
       searchQuery: query,
     ));
   }
@@ -119,74 +135,105 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
 
   Future<void> _onAddParentRequested(AddParentRequested event, Emitter<ClientState> emit) async {
     emit(state.copyWith(status: ClientStatus.loading, clearMessage: true, clearErrorMessage: true));
-    try {
-      await _addParent(event.parent);
-      // Передаем сообщение об успехе в _loadData
-      await _loadData(emit, successMessage: 'Родитель "${event.parent.fullName}" успешно добавлен.');
-    } catch (e) {
-      // Устанавливаем сообщение об ошибке
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка добавления родителя'));
-    }
+    final result = await _addParent(event.parent);
+    await result.fold(
+      (failure) async {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка добавления родителя: ${failure.toString()}',
+        ));
+      },
+      (_) async {
+        await _loadData(emit, successMessage: 'Родитель "${event.parent.fullName}" успешно добавлен.');
+      },
+    );
   }
 
   Future<void> _onUpdateParentRequested(UpdateParentRequested event, Emitter<ClientState> emit) async {
     emit(state.copyWith(status: ClientStatus.loading, clearMessage: true, clearErrorMessage: true));
-    try {
-      await _updateParent(event.parent);
-      await _loadData(emit, successMessage: 'Данные родителя "${event.parent.fullName}" обновлены.');
-    } catch (e) {
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка обновления родителя'));
-    }
+    final result = await _updateParent(event.parent);
+    await result.fold(
+      (failure) async {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка обновления родителя: ${failure.toString()}',
+        ));
+      },
+      (_) async {
+        await _loadData(emit, successMessage: 'Данные родителя "${event.parent.fullName}" обновлены.');
+      },
+    );
   }
 
   Future<void> _onDeleteParentRequested(DeleteParentRequested event, Emitter<ClientState> emit) async {
     emit(state.copyWith(status: ClientStatus.loading, clearMessage: true, clearErrorMessage: true));
-    try {
-      await _deleteParent(event.parentId);
-      await _loadData(emit, successMessage: 'Родитель удален.');
-    } catch (e) {
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка удаления родителя'));
-    }
+    final result = await _deleteParent(event.parentId);
+    await result.fold(
+      (failure) async {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка удаления родителя: ${failure.toString()}',
+        ));
+      },
+      (_) async {
+        await _loadData(emit, successMessage: 'Родитель удален.');
+      },
+    );
   }
 
   Future<void> _onAddChildRequested(AddChildRequested event, Emitter<ClientState> emit) async {
     emit(state.copyWith(status: ClientStatus.loading, clearMessage: true, clearErrorMessage: true));
-    try {
-      await _addChild(event.child);
-      await _loadData(emit, successMessage: 'Ребенок "${event.child.fullName}" добавлен.');
-    } catch (e) {
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка добавления ребенка'));
-    }
+    final result = await _addChild(event.child);
+    await result.fold(
+      (failure) async {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка добавления ребенка: ${failure.toString()}',
+        ));
+      },
+      (_) async {
+        await _loadData(emit, successMessage: 'Ребенок "${event.child.fullName}" добавлен.');
+      },
+    );
   }
 
   Future<void> _onUpdateChildRequested(UpdateChildRequested event, Emitter<ClientState> emit) async {
     emit(state.copyWith(status: ClientStatus.loading, clearMessage: true, clearErrorMessage: true));
-    try {
-      await _updateChild(event.child);
-      await _loadData(emit, successMessage: 'Данные ребенка "${event.child.fullName}" обновлены.');
-    } catch (e) {
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка обновления ребенка'));
-    }
+    final result = await _updateChild(event.child);
+    await result.fold(
+      (failure) async {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка обновления ребенка: ${failure.toString()}',
+        ));
+      },
+      (_) async {
+        await _loadData(emit, successMessage: 'Данные ребенка "${event.child.fullName}" обновлены.');
+      },
+    );
   }
 
   Future<void> _onDeleteChildRequested(DeleteChildRequested event, Emitter<ClientState> emit) async {
     emit(state.copyWith(status: ClientStatus.loading, clearMessage: true, clearErrorMessage: true));
-    try {
-      await _deleteChild(event.childId);
-      await _loadData(emit, successMessage: 'Ребенок удален.');
-    } catch (e) {
-      emit(state.copyWith(status: ClientStatus.failure, errorMessage: e.toString(), message: 'Ошибка удаления ребенка'));
-    }
+    final result = await _deleteChild(event.childId);
+    await result.fold(
+      (failure) async {
+        emit(state.copyWith(
+          status: ClientStatus.failure,
+          errorMessage: 'Ошибка удаления ребенка: ${failure.toString()}',
+        ));
+      },
+      (_) async {
+        await _loadData(emit, successMessage: 'Ребенок удален.');
+      },
+    );
   }
 
   void _onClearClientMessage(ClearClientMessage event, Emitter<ClientState> emit) {
-    emit(state.copyWith(clearMessage: true)); // Используем флаг clearMessage в copyWith
+    emit(state.copyWith(clearMessage: true, clearErrorMessage: true));
   }
 
-  // Обработчик изменения поискового запроса
   void _onSearchQueryChanged(SearchQueryChanged event, Emitter<ClientState> emit) {
-    // Просто вызываем фильтрацию с новым запросом
-    // _emitFilteredState сам обновит и searchQuery, и отфильтрованные данные в состоянии
     _emitFilteredState(emit, event.query);
   }
 }

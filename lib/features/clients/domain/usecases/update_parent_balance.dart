@@ -1,13 +1,18 @@
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:rehabilitation_center_app/core/errors/failures.dart';
+import 'package:rehabilitation_center_app/core/usecases/usecase.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
 
-class UpdateParentBalance {
+class UpdateParentBalance implements UseCase<void, UpdateParentBalanceParams> {
   final ClientRepository repository;
 
   UpdateParentBalance(this.repository);
 
-  Future<void> call(UpdateParentBalanceParams params) async {
-    await repository.updateParentBalance(params.parentId, params.amount);
+  @override
+  Future<Either<Failure, void>> call(UpdateParentBalanceParams params) async {
+    return await repository.updateParentBalance(
+        parentId: params.parentId, amount: params.amount);
   }
 }
 

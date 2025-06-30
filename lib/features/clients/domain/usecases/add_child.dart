@@ -1,12 +1,17 @@
+import 'package:dartz/dartz.dart';
+import 'package:rehabilitation_center_app/core/errors/failures.dart';
+import 'package:rehabilitation_center_app/core/usecases/usecase.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
 
-class AddChild {
+class AddChild implements UseCase<Child, Child> {
   final ClientRepository repository;
 
   AddChild(this.repository);
 
-  Future<Child> call(Child child) async {
-    return await repository.addChild(child);
+  @override
+  Future<Either<Failure, Child>> call(Child params) async {
+    return await repository.addChild(params);
   }
 }
+

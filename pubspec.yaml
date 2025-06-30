@@ -53,6 +53,7 @@ dependencies:
   path: ^1.9.1
   go_router: ^15.1.1
   get_it: ^8.0.3
+  dartz: ^0.10.1
   # CSV generation
   csv: ^5.1.1
   # File saving dialog

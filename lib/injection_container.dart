@@ -16,6 +16,22 @@ import 'package:rehabilitation_center_app/features/activity_types/domain/usecase
 import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/update_activity_type.dart';
 import 'package:rehabilitation_center_app/features/activity_types/presentation/bloc/activity_type_bloc.dart';
 
+// --- Импорты для фичи Клиенты ---
+import 'package:rehabilitation_center_app/features/clients/data/datasources/client_local_data_source.dart';
+import 'package:rehabilitation_center_app/features/clients/data/repositories/client_repository_impl.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_id_by_child_id.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
+import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_child.dart';
+
+
 // --- Импорты для фичи Расписание ---
 import 'package:rehabilitation_center_app/features/schedule/data/repositories/schedule_repository_impl.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/repositories/schedule_repository.dart';
@@ -28,20 +44,6 @@ import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/sc
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart';
-// ----------------------------------
-
-// --- Импорты для фичи Клиенты ---
-import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_parent.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_parent.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_child.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
-import 'package:rehabilitation_center_app/features/clients/data/repositories/client_repository_impl.dart';
-import 'package:rehabilitation_center_app/features/clients/data/datasources/client_local_data_source.dart';
 // ----------------------------------
 
 // Сервис локатор
@@ -99,6 +101,45 @@ Future<void> init() async {
     () => ActivityTypeRepositoryImpl(sl()),
   );
 
+  // --- Features - Clients ---
+  // Bloc
+  sl.registerFactory(
+    () => ClientBloc(
+      getParentsWithChildren: sl(),
+      addParent: sl(),
+      updateParent: sl(),
+      deleteParent: sl(),
+      addChild: sl(),
+      updateChild: sl(),
+      deleteChild: sl(),
+      updateParentBalance: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => GetParentsWithChildren(sl()));
+  sl.registerLazySingleton(() => AddParent(sl()));
+  sl.registerLazySingleton(() => UpdateParent(sl()));
+  sl.registerLazySingleton(() => DeleteParent(sl()));
+  sl.registerLazySingleton(() => AddChild(sl()));
+  sl.registerLazySingleton(() => UpdateChild(sl()));
+  sl.registerLazySingleton(() => DeleteChild(sl()));
+  sl.registerLazySingleton(() => GetParentIdByChildId(sl()));
+  sl.registerLazySingleton(() => UpdateParentBalance(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ClientRepository>(
+    () => ClientRepositoryImpl(localDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<ClientLocalDataSource>(
+    () => ClientLocalDataSourceImpl(clientDao: sl()),
+  );
+
+  // DAO
+  sl.registerLazySingleton(() => ClientDao(sl()));
+
   // --- Features - Schedule ---
   // Bloc
   sl.registerFactory(
@@ -130,6 +171,7 @@ Future<void> init() async {
   ); // Register new use case
 
   sl.registerLazySingleton(() => GetClientSessionBalance(sl()));
+  // Use cases, которые относятся к клиентам, но используются в расписании, теперь в секции Clients
 
   // Repository
   sl.registerLazySingleton<ScheduleRepository>(
@@ -147,38 +189,5 @@ Future<void> init() async {
     sl.registerSingleton<AppDatabase>(AppDatabase());
   }
 
-  // TODO: Добавить регистрацию зависимостей для других фич (Клиенты)
 
-  // --- Features - Clients ---
-  // Bloc
-  sl.registerFactory(
-    () => ClientBloc(
-      getParentsWithChildren: sl(),
-      addParent: sl(),
-      updateParent: sl(),
-      deleteParent: sl(),
-      addChild: sl(),
-      updateChild: sl(),
-      deleteChild: sl(),
-    ),
-  );
-
-  // Use cases
-  sl.registerLazySingleton(() => GetParentsWithChildren(sl()));
-  sl.registerLazySingleton(() => AddParent(sl()));
-  sl.registerLazySingleton(() => UpdateParent(sl()));
-  sl.registerLazySingleton(() => DeleteParent(sl()));
-  sl.registerLazySingleton(() => AddChild(sl()));
-  sl.registerLazySingleton(() => UpdateChild(sl()));
-  sl.registerLazySingleton(() => DeleteChild(sl()));
-
-  // Repository
-  sl.registerLazySingleton<ClientRepository>(
-    () => ClientRepositoryImpl(localDataSource: sl()),
-  );
-
-  // Data sources
-  sl.registerLazySingleton<ClientLocalDataSource>(
-    () => ClientLocalDataSourceImpl(clientDao: sl()),
-  );
 }

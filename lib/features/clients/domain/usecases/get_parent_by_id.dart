@@ -4,14 +4,19 @@ import 'package:rehabilitation_center_app/core/usecases/usecase.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/parent.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
 
-class AddParent implements UseCase<Parent, Parent> {
+class GetParentById implements UseCase<Parent, GetParentByIdParams> {
   final ClientRepository repository;
 
-  AddParent(this.repository);
+  GetParentById(this.repository);
 
   @override
-  Future<Either<Failure, Parent>> call(Parent params) async {
-    return await repository.addParent(params);
+  Future<Either<Failure, Parent>> call(GetParentByIdParams params) async {
+    return await repository.getParentById(params.parentId);
   }
 }
 
+class GetParentByIdParams {
+  final int parentId;
+
+  GetParentByIdParams({required this.parentId});
+}

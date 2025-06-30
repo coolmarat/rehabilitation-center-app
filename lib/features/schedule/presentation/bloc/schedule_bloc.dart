@@ -141,9 +141,20 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
 
       // Списываем баланс, если цена больше нуля
       if (event.price > 0) {
-        final parentId = await _getParentIdByChildId(event.childId);
-        await _updateParentBalance(
-            UpdateParentBalanceParams(parentId: parentId, amount: event.price));
+        final parentIdEither = await _getParentIdByChildId(event.childId);
+
+        await parentIdEither.fold(
+          (failure) => throw Exception('Не удалось найти родителя для списания баланса.'),
+          (parentId) async {
+            final result = await _updateParentBalance(
+              UpdateParentBalanceParams(parentId: parentId, amount: -event.price), // Передаем отрицательное значение для списания
+            );
+            result.fold(
+              (failure) => throw Exception('Не удалось списать средства с баланса.'),
+              (_) => null, // Успех
+            );
+          },
+        );
       }
 
       emit(ScheduleAddSuccess());

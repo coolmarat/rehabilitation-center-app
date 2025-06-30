@@ -33,6 +33,9 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       isCompleted: Value(
         session.isCompleted,
       ), // Use Value() for field with default
+      isPaid: Value(
+        session.isPaid,
+      ), // Use Value() for payment field
       notes:
           session.notes == null
               ? const Value.absent()
@@ -164,6 +167,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
         childId: sessionEntry.childId,
         notes: sessionEntry.notes,
         isCompleted: sessionEntry.isCompleted,
+        isPaid: sessionEntry.isPaid,
       );
     }).toList();
   }
@@ -179,6 +183,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       durationMinutes: Value(session.duration.inMinutes),
       price: Value(session.price),
       isCompleted: Value(session.isCompleted),
+      isPaid: Value(session.isPaid),
       notes:
           session.notes == null
               ? const Value.absent()
@@ -251,6 +256,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
           durationMinutes: Value<int>(session.duration.inMinutes),
           price: session.price,
           isCompleted: Value(session.isCompleted),
+          isPaid: Value(session.isPaid),
           notes:
               session.notes == null
                   ? const Value.absent()

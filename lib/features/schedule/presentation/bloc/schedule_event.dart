@@ -69,6 +69,20 @@ class AddNewSession extends ScheduleEvent {
   ];
 }
 
+// Событие для обновления баланса родителя при оплате сессии
+class DeductPaymentFromBalance extends ScheduleEvent {
+  final int childId;
+  final double amount;
+
+  const DeductPaymentFromBalance({
+    required this.childId,
+    required this.amount,
+  });
+
+  @override
+  List<Object> get props => [childId, amount];
+}
+
 // Событие для обновления существующей сессии
 class UpdateExistingSession extends ScheduleEvent {
   final Session updatedSession;

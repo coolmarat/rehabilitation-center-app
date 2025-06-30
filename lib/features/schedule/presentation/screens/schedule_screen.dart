@@ -1,23 +1,26 @@
 // Экран расписания
 
+import 'dart:async'; // Added for Future<void>
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart'; // Для форматирования дат
-// Use the correct path for ActivityType
-
 import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
+// Domain models
+import 'package:rehabilitation_center_app/features/clients/domain/parent.dart'; // Для типа Parent
+import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart'; // Включает ClientState и ClientStatus
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
-import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart'; // <-- Re-import domain Session
-// Example imports for BLoCs - replace with your actual BLoC paths and names
+// BLoCs imports
 import 'package:rehabilitation_center_app/features/employees/presentation/bloc/employee_bloc.dart';
-import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
-import 'package:table_calendar/table_calendar.dart'; // <-- Correct import
+import 'package:rehabilitation_center_app/features/schedule/domain/entities/session_details.dart';
+// Repositories
+// Repositories удалены неиспользуемые импорты
+import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart'; // <-- Re-import domain Session
+import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart'; // Используем для события DeductPaymentFromBalance
 import 'package:rehabilitation_center_app/shared_widgets/filterable_dropdown.dart'; // For filter dropdowns
-
-// import '../../../../core/models/models.dart'; // <-- Removed, use specific domain models
-import '../../domain/entities/session_details.dart'; // For SessionDetails
-import '../bloc/schedule_bloc.dart'; // <-- Keep only main BLoC import
+import 'package:table_calendar/table_calendar.dart'; // <-- Correct import
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -51,32 +54,43 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     // Ensure EmployeesBloc and ClientsBloc are provided above this widget in the tree
     // And that they have appropriate events (e.g., LoadAllEmployeesEvent, LoadAllClientsEvent)
     // and states (e.g., EmployeesLoaded, ClientsLoaded)
-    context.read<EmployeeBloc>().add(LoadEmployees()); // Replace with your actual event
-    context.read<ClientBloc>().add(LoadClients());       // Replace with your actual event
+    context.read<EmployeeBloc>().add(
+      LoadEmployees(),
+    ); // Replace with your actual event
+    context.read<ClientBloc>().add(
+      LoadClients(),
+    ); // Replace with your actual event
   }
 
   // Метод для получения сессий для конкретного дня
   List<SessionDetails> _getSessionsForDay(DateTime day) {
     final state = BlocProvider.of<ScheduleBloc>(context).state;
     if (state is ScheduleLoaded) {
-      List<SessionDetails> sessionsForDay = state.allSessionsInView.where((session) {
-        return isSameDay(session.dateTime, day);
-      }).toList();
+      List<SessionDetails> sessionsForDay =
+          state.allSessionsInView.where((session) {
+            return isSameDay(session.dateTime, day);
+          }).toList();
 
       // Apply employee filter if an employee is selected
       if (_selectedEmployee != null) {
-        sessionsForDay = sessionsForDay.where((session) {
-          return session.employeeId == _selectedEmployee!.id; // Ensure your SessionDetails has employeeId and Employee has id
-        }).toList();
+        sessionsForDay =
+            sessionsForDay.where((session) {
+              return session.employeeId ==
+                  _selectedEmployee!
+                      .id; // Ensure your SessionDetails has employeeId and Employee has id
+            }).toList();
       }
 
       // Apply child filter if a child is selected
       if (_selectedChild != null) {
-        sessionsForDay = sessionsForDay.where((session) {
-          return session.childId == _selectedChild!.id; // Ensure your SessionDetails has childId and Child has id
-        }).toList();
+        sessionsForDay =
+            sessionsForDay.where((session) {
+              return session.childId ==
+                  _selectedChild!
+                      .id; // Ensure your SessionDetails has childId and Child has id
+            }).toList();
       }
-      
+
       return sessionsForDay;
     }
     return [];
@@ -114,9 +128,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 setState(() {
                   _isLoadingEmployees = false;
                   // Optionally, show an error message to the user
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message)),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.message)));
                 });
               }
             },
@@ -130,14 +144,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               } else if (state.status == ClientStatus.success) {
                 setState(() {
                   _isLoadingClients = false;
-                  _allChildren = state.parentsWithChildren.values.expand((children) => children).toList();
+                  _allChildren =
+                      state.parentsWithChildren.values
+                          .expand((children) => children)
+                          .toList();
                 });
               } else if (state.status == ClientStatus.failure) {
                 setState(() {
                   _isLoadingClients = false;
                   // Optionally, show an error message to the user
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.errorMessage ?? 'Неизвестная ошибка при загрузке клиентов')),
+                    SnackBar(
+                      content: Text(
+                        state.errorMessage ??
+                            'Неизвестная ошибка при загрузке клиентов',
+                      ),
+                    ),
                   );
                 });
               }
@@ -145,7 +167,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         ],
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // Align items to the top
           children: [
             // Left Column: Calendar and Filters
             Expanded(
@@ -196,7 +219,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             ).add(LoadSessionsForDay(selectedDay));
                           }
                         },
-                        calendarFormat: CalendarFormat.month, // Or week, twoWeeks
+                        calendarFormat:
+                            CalendarFormat.month, // Or week, twoWeeks
                         onPageChanged: (focusedDay) {
                           // No need to call `setState()` here, `focusedDay` is handled internally
                           // You might want to load data if your logic requires pre-fetching for pages
@@ -271,10 +295,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Фильтры:', style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          'Фильтры:',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 12.0),
                         // Employee Filter
-                        Text('Специалист:', style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          'Специалист:',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 8.0),
                         _isLoadingEmployees
                             ? const Center(child: CircularProgressIndicator())
@@ -288,7 +318,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 setState(() {
                                   _selectedEmployee = selectedEmployee;
                                   if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                    _sessions = _getSessionsForDay(
+                                      _selectedDay!,
+                                    );
                                   }
                                 });
                               },
@@ -296,13 +328,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 setState(() {
                                   _selectedEmployee = null;
                                   if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                    _sessions = _getSessionsForDay(
+                                      _selectedDay!,
+                                    );
                                   }
                                 });
                               },
                             ),
                         // Child Filter
-                        Text('Клиент (ребенок):', style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          'Клиент (ребенок):',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 8.0),
                         _isLoadingClients
                             ? const Center(child: CircularProgressIndicator())
@@ -316,7 +353,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 setState(() {
                                   _selectedChild = selectedChild;
                                   if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                    _sessions = _getSessionsForDay(
+                                      _selectedDay!,
+                                    );
                                   }
                                 });
                               },
@@ -324,7 +363,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 setState(() {
                                   _selectedChild = null;
                                   if (_selectedDay != null) {
-                                    _sessions = _getSessionsForDay(_selectedDay!);
+                                    _sessions = _getSessionsForDay(
+                                      _selectedDay!,
+                                    );
                                   }
                                 });
                               },
@@ -776,9 +817,9 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                         setState(() {
                           _selectedChildId = child.id;
                         });
-                        context
-                            .read<ScheduleBloc>()
-                            .add(GetClientSessionBalance(child.id));
+                        context.read<ScheduleBloc>().add(
+                          GetClientSessionBalance(child.id),
+                        );
                       },
                       onClearSelected: () {
                         setState(() {
@@ -804,20 +845,27 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                           if (state is ScheduleFormDataLoaded) {
                             if (state.isBalanceLoading) {
                               return const Center(
-                                  child: Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: CircularProgressIndicator(),
-                              ));
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
                             }
 
                             if (state.clientSessionBalance != null) {
                               final balance = state.clientSessionBalance!;
-                              final color = balance < 0 ? Colors.red : Colors.green;
+                              final color =
+                                  balance < 0 ? Colors.red : Colors.green;
                               return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0,
+                                ),
                                 child: Text(
                                   'Баланс сессий клиента: $balance',
-                                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               );
                             }
@@ -1105,7 +1153,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     _durationController = TextEditingController(
       text: widget.session.duration.inMinutes.toString(),
     );
-    _isPaid = widget.session.isCompleted;
+    _isPaid = widget.session.isPaid;
     _notesController = TextEditingController(text: widget.session.notes ?? '');
 
     // Загружаем данные для формы, если они еще не загружены
@@ -1116,7 +1164,9 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     }
     // Запрашиваем баланс для изначально выбранного клиента
     if (_selectedChildId != null) {
-      context.read<ScheduleBloc>().add(GetClientSessionBalance(_selectedChildId!));
+      context.read<ScheduleBloc>().add(
+        GetClientSessionBalance(_selectedChildId!),
+      );
     }
   }
 
@@ -1331,9 +1381,9 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
                   _selectedChildId = child.id;
                 });
                 // Запрашиваем баланс при смене клиента
-                context
-                    .read<ScheduleBloc>()
-                    .add(GetClientSessionBalance(child.id));
+                context.read<ScheduleBloc>().add(
+                  GetClientSessionBalance(child.id),
+                );
               },
               onClearSelected: () {
                 setState(() {
@@ -1400,6 +1450,25 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 8),
+            // Checkbox для статуса оплаты
+            Row(
+              children: [
+                Checkbox(
+                  value: _isPaid,
+                  onChanged: (value) {
+                    setState(() {
+                      _isPaid = value ?? false;
+                      if (_isPaid) {
+                        // Если статус меняется на "оплачено", показываем диалог
+                        _showPaymentConfirmationDialog();
+                      }
+                    });
+                  },
+                ),
+                const Text('Оплачено'),
+              ],
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -1474,6 +1543,80 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     } */
   }
 
+  // Переменная для хранения решения пользователя о списании средств
+  bool _shouldDeductPayment = false;
+  // Цена занятия для списания
+  double _sessionPriceForDeduction = 0.0;
+
+  // Показать диалог подтверждения оплаты
+  void _showPaymentConfirmationDialog() async {
+    if (_selectedChildId == null) return;
+
+    // Получаем актуальный баланс родителя из ClientBloc
+    // Сначала получаем parent ID через ChildId
+    final parentId = await _getParentIdForChild(_selectedChildId!);
+    if (parentId == null) return;
+
+    // Затем получаем родителя чтобы узнать его актуальный баланс
+    final parent = await _getParentById(parentId);
+    if (parent == null) return;
+
+    // Получаем стоимость занятия и используем актуальный баланс из parent модели, как в clients_screen
+    await _proceedWithPaymentDialog(parent.balance, widget.session.price.toInt());
+  }
+
+  Future<void> _proceedWithPaymentDialog(double currentBalance, int sessionPrice) async {
+    final double newBalance = currentBalance - sessionPrice;
+    final shouldDeduct = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Подтверждение оплаты'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Списать средства с баланса родителя?'),
+                const SizedBox(height: 8),
+                Text(
+                  'Текущий баланс: $currentBalance ₽',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: currentBalance < 0 ? Colors.red : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text('Стоимость занятия: ${sessionPrice.toInt()} ₽'),
+                const SizedBox(height: 4),
+                Text(
+                  'Баланс после оплаты: $newBalance ₽',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: newBalance < 0 ? Colors.red : null,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Нет'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Да, списать'),
+              ),
+            ],
+          ),
+    );
+
+    // Запоминаем решение пользователя для использования после сохранения
+    _shouldDeductPayment = shouldDeduct == true;
+    if (_shouldDeductPayment) {
+      _sessionPriceForDeduction = sessionPrice.toDouble();
+    }
+  }
+
   // Метод для отправки ИЗМЕНЕННОЙ формы
   void _submitEditForm() {
     if (_selectedTime == null) {
@@ -1515,7 +1658,11 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
         dateTime: dateTime,
         duration: duration,
         price: price,
-        isCompleted: _isPaid,
+        isCompleted:
+            widget
+                .session
+                .isCompleted, // Сохраняем текущее значение isCompleted
+        isPaid: _isPaid, // Устанавливаем значение isPaid
         notes: notes,
         activityTypeId: _selectedActivityTypeId!,
         employeeId: _selectedEmployeeId!,
@@ -1526,6 +1673,162 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
       BlocProvider.of<ScheduleBloc>(context).add(
         UpdateExistingSession(updatedDomainSession),
       ); // <-- Pass domain Session
+      
+      // Если пользователь согласился списать деньги с баланса родителя,
+      // и сессия помечена как оплаченная, то списываем средства
+      if (_shouldDeductPayment && _isPaid && _selectedChildId != null) {
+        // Вызываем событие для списания средств с баланса родителя
+        context.read<ScheduleBloc>().add(
+          DeductPaymentFromBalance(
+            childId: _selectedChildId!,
+            amount: _sessionPriceForDeduction,
+          ),
+        );
+
+        // Показываем уведомление об успешном списании
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Средства списаны с баланса родителя'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
+  // Helper method to get parent ID for a child
+  Future<int?> _getParentIdForChild(int childId) async {
+    try {
+      // Get parent ID using ClientBloc
+      final clientBloc = context.read<ClientBloc>();
+      final currentState = clientBloc.state;
+
+      // First check if we already have parent info in state - check if status is success
+      if (currentState.status == ClientStatus.success) {
+        // Find child in all loaded parent-children pairs
+        for (final entry in currentState.parentsWithChildren.entries) {
+          for (final child in entry.value) {
+            if (child.id == childId) {
+              return child.parentId;
+            }
+          }
+        }
+        // If we reach here, child was not found
+        throw Exception('Child not found');
+      } else {
+        // Load parent ID if not available
+        // This would typically be done via a repository or use case
+        // For now, let's use a simplified approach by dispatching a load event
+        // and waiting for the result
+        return await _getParentIdFromDatabase(childId);
+      }
+    } catch (e) {
+      print('Error getting parent ID: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: Не удалось получить ID родителя: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+  }
+
+  // Method to query database directly for parent ID
+  Future<int?> _getParentIdFromDatabase(int childId) async {
+    try {
+      // Instead of dispatching events, just use the existing Bloc state
+      // or repository methods if needed
+      final clientBloc = context.read<ClientBloc>();
+      final currentState = clientBloc.state;
+
+      // If ClientBloc already has data, search through it
+      if (currentState.status == ClientStatus.success) {
+        for (final entry in currentState.parentsWithChildren.entries) {
+          for (final child in entry.value) {
+            if (child.id == childId) {
+              return child.parentId;
+            }
+          }
+        }
+      }
+
+      // If not found or data not loaded, return null and handle in the caller
+      return null;
+    } catch (e) {
+      print('Database error getting parent ID: $e');
+      return null;
+    }
+  }
+
+  // Helper method to get parent by ID
+  Future<Parent?> _getParentById(int parentId) async {
+    try {
+      // Use ClientBloc or repository to get parent
+      final clientBloc = context.read<ClientBloc>();
+      final currentState = clientBloc.state;
+
+      // Check if we already have parent loaded
+      if (currentState.status == ClientStatus.success) {
+        // Look through all parents
+        for (final parent in currentState.parentsWithChildren.keys) {
+          if (parent.id == parentId) {
+            return parent;
+          }
+        }
+        // Parent not found in current state, need to load from database
+        return await _getParentFromDatabase(parentId);
+      } else {
+        // Need to load from database
+        return await _getParentFromDatabase(parentId);
+      }
+    } catch (e) {
+      print('Error getting parent: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: Не удалось получить данные родителя: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+  }
+
+  // Method to query database directly for parent
+  Future<Parent?> _getParentFromDatabase(int parentId) async {
+    try {
+      // Instead of dispatching events, just use the existing Bloc state
+      final clientBloc = context.read<ClientBloc>();
+      final currentState = clientBloc.state;
+
+      // If ClientBloc already has data, search through it
+      if (currentState.status == ClientStatus.success) {
+        for (final parent in currentState.parentsWithChildren.keys) {
+          if (parent.id == parentId) {
+            return parent;
+          }
+        }
+      }
+
+      // If parent not found but we have some other data about the parent in the schedule bloc
+      final scheduleState = context.read<ScheduleBloc>().state;
+      if (scheduleState is ScheduleFormDataLoaded &&
+          scheduleState.clientSessionBalance != null) {
+        // Use the balance from ScheduleBloc state as a fallback
+        // Create a minimal Parent object with just the data we need
+        return Parent(
+          id: parentId,
+          fullName: 'Родитель', // Default name
+          balance: scheduleState.clientSessionBalance!.toDouble(),
+          phoneNumber: '', // Empty placeholder
+        );
+      }
+
+      // Return null if no data available
+      return null;
+    } catch (e) {
+      print('Database error getting parent: $e');
+      return null;
     }
   }
 }

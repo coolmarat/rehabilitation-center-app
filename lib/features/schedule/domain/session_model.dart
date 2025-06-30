@@ -9,6 +9,7 @@ class Session extends Equatable {
   final Duration duration; // Продолжительность занятия (например, 45 минут)
   final double price; // Фактическая цена занятия
   final bool isCompleted; // Статус: проведено или запланировано
+  final bool isPaid; // Статус оплаты занятия
   final String? notes; // Дополнительные заметки
 
   const Session({
@@ -20,6 +21,7 @@ class Session extends Equatable {
     required this.duration,
     required this.price,
     this.isCompleted = false,
+    this.isPaid = false,
     this.notes,
   });
 
@@ -36,6 +38,7 @@ class Session extends Equatable {
         duration,
         price,
         isCompleted,
+        isPaid,
         notes,
       ];
 
@@ -48,6 +51,7 @@ class Session extends Equatable {
     Duration? duration,
     double? price,
     bool? isCompleted,
+    bool? isPaid,
     String? notes,
     bool clearNotes = false, // Флаг для очистки заметок
   }) {
@@ -60,6 +64,7 @@ class Session extends Equatable {
       duration: duration ?? this.duration,
       price: price ?? this.price,
       isCompleted: isCompleted ?? this.isCompleted,
+      isPaid: isPaid ?? this.isPaid,
       notes: clearNotes ? null : notes ?? this.notes,
     );
   }

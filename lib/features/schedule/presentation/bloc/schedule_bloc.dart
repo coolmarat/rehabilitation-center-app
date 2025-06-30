@@ -68,6 +68,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     on<DeleteExistingSession>(_onDeleteExistingSession);
     on<AddRecurringSessions>(_onAddRecurringSessions);
     on<GetClientSessionBalance>(_onGetClientSessionBalance);
+    on<DeductPaymentFromBalance>(_onDeductPaymentFromBalance);
   }
 
   Future<void> _onSelectedDateChanged(
@@ -248,21 +249,69 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     GetClientSessionBalance event,
     Emitter<ScheduleState> emit,
   ) async {
-    if (state is ScheduleFormDataLoaded) {
-      final currentState = state as ScheduleFormDataLoaded;
-      emit(currentState.copyWith(isBalanceLoading: true, clientSessionBalance: null));
-      try {
+    try {
+      // Сохраняем текущее состояние, чтобы не потерять данные формы
+      if (state is ScheduleFormDataLoaded) {
+        final currentState = state as ScheduleFormDataLoaded;
+        emit(currentState.copyWith(isBalanceLoading: true));
+        
         final balance = await _getClientSessionBalance(event.clientId);
-        if (state is ScheduleFormDataLoaded) {
-          emit((state as ScheduleFormDataLoaded).copyWith(
-            clientSessionBalance: balance,
-            isBalanceLoading: false,
-          ));
-        }
-      } catch (e) {
-        if (state is ScheduleFormDataLoaded) {
-          emit((state as ScheduleFormDataLoaded).copyWith(isBalanceLoading: false));
-        }
+        emit(currentState.copyWith(
+          clientSessionBalance: balance,
+          isBalanceLoading: false,
+        ));
+      }
+    } catch (e) {
+      if (state is ScheduleFormDataLoaded) {
+        final currentState = state as ScheduleFormDataLoaded;
+        emit(currentState.copyWith(isBalanceLoading: false));
+      } else {
+        emit(ScheduleError('Ошибка загрузки баланса: ${e.toString()}'));
+      }
+    }
+  }
+  
+  Future<void> _onDeductPaymentFromBalance(
+    DeductPaymentFromBalance event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    try {
+      final parentIdEither = await _getParentIdByChildId(event.childId);
+      
+      await parentIdEither.fold(
+        (failure) async {
+          emit(ScheduleError('Не удалось найти родителя для списания баланса.'));
+        },
+        (parentId) async {
+          // Вычитаем сумму из баланса родителя (передаем отрицательное значение для списания)
+          final result = await _updateParentBalance(
+            UpdateParentBalanceParams(
+              parentId: parentId,
+              amount: -event.amount, // Отрицательное значение для списания
+            ),
+          );
+          
+          await result.fold(
+            (failure) async {
+              emit(ScheduleError('Ошибка обновления баланса: $failure'));
+            },
+            (_) async {
+              // Обновляем баланс в интерфейсе
+              if (state is ScheduleFormDataLoaded && emit.isDone == false) {
+                final currentState = state as ScheduleFormDataLoaded;
+                // Запрашиваем актуальный баланс после обновления
+                final newBalance = await _getClientSessionBalance(event.childId);
+                if (!emit.isDone) {
+                  emit(currentState.copyWith(clientSessionBalance: newBalance));
+                }
+              }
+            },
+          );
+        },
+      );
+    } catch (e) {
+      if (!emit.isDone) {
+        emit(ScheduleError('Ошибка обновления баланса: ${e.toString()}'));
       }
     }
   }

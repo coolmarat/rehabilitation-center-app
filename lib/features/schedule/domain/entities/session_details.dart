@@ -14,6 +14,7 @@ class SessionDetails extends Equatable {
   final Duration duration;
   final String? notes;
   final bool isCompleted;
+  final bool isPaid;
 
   const SessionDetails({
     required this.sessionId,
@@ -28,6 +29,7 @@ class SessionDetails extends Equatable {
     required this.duration,
     required this.notes,
     required this.isCompleted,
+    required this.isPaid,
   });
 
   @override
@@ -44,5 +46,6 @@ class SessionDetails extends Equatable {
         duration,
         notes,
         isCompleted,
+        isPaid,
       ];
 }

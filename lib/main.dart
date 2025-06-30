@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
             ..add(LoadSessionsForDay(DateTime.now())), // Загружаем сессии для сегодняшнего дня при старте
         ),
         BlocProvider<ClientBloc>(
-          create: (context) => di.sl<ClientBloc>()..add(LoadClients()), // Provide ClientBloc and load clients
+          create: (context) => di.sl<ClientBloc>(), // ClientBloc уже вызывает LoadClients() в своём конструкторе
         ),
         // TODO: Добавить провайдеры для других BLoC'ов
       ],

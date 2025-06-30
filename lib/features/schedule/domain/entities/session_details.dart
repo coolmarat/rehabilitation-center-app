@@ -34,18 +34,18 @@ class SessionDetails extends Equatable {
 
   @override
   List<Object?> get props => [
-        sessionId,
-        dateTime,
-        employeeName,
-        activityTypeName,
-        childName,
-        price,
-        employeeId,
-        activityTypeId,
-        childId,
-        duration,
-        notes,
-        isCompleted,
-        isPaid,
-      ];
+    sessionId,
+    dateTime,
+    employeeName,
+    activityTypeName,
+    childName,
+    price,
+    employeeId,
+    activityTypeId,
+    childId,
+    duration,
+    notes,
+    isCompleted,
+    isPaid,
+  ];
 }

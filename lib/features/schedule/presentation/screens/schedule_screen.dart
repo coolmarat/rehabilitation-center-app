@@ -3,7 +3,6 @@
 import 'dart:async'; // Added for Future<void>
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart'; // Для форматирования дат
 import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
@@ -728,29 +727,7 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                       hintText: 'Сотрудник',
                       // TODO: Add validation equivalent if needed
                     ),
-                    // Выпадающий список Сотрудников (OLD)
-                    /*
-                    DropdownButtonFormField<int>(
-                      value: _selectedEmployeeId,
-                      hint: const Text('Сотрудник'),
-                      items:
-                          formData.employees.map((employee) {
-                            return DropdownMenuItem(
-                              value: employee.id,
-                              child: Text(employee.fullName),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedEmployeeId = value;
-                        });
-                      },
-                      validator:
-                          (value) =>
-                              value == null ? 'Выберите сотрудника' : null,
-                      isExpanded: true,
-                    ),
-                    */
+
                     const SizedBox(height: 8),
                     // --- Activity Type Dropdown ---
                     FilterableDropdown<ActivityType>(
@@ -768,45 +745,7 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                       hintText: 'Услуга',
                       // TODO: Add validation equivalent if needed
                     ),
-                    // Выпадающий список Услуг (Типов занятий) (OLD)
-                    /*
-                    DropdownButtonFormField<int>(
-                      value: _selectedActivityTypeId,
-                      hint: const Text('Услуга'),
-                      items:
-                          formData.activityTypes.map((activity) {
-                            return DropdownMenuItem(
-                              value: activity.id,
-                              child: Text(activity.name),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedActivityTypeId = value;
-                          // Обновляем цену при смене услуги
-                          if (value != null) {
-                            try {
-                              final selectedActivity = formData.activityTypes
-                                  .firstWhere((a) => a.id == value);
-                              _priceController.text = selectedActivity
-                                  .defaultPrice
-                                  .toStringAsFixed(2);
-                            } catch (e) {
-                              print(
-                                'Error finding price for activity type: $e',
-                              );
-                              _priceController.clear();
-                            }
-                          } else {
-                            _priceController.clear();
-                          }
-                        });
-                      },
-                      validator:
-                          (value) => value == null ? 'Выберите услугу' : null,
-                      isExpanded: true,
-                    ),
-                    */
+
                     const SizedBox(height: 8),
                     // --- Child Dropdown ---
                     FilterableDropdown<Child>(
@@ -873,26 +812,7 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                           return const SizedBox.shrink();
                         },
                       ),
-                    // Выпадающий список Детей (OLD)
-                    /* DropdownButtonFormField<int>(
-                      value: _selectedChildId,
-                      hint: const Text('Ребенок'),
-                      items:
-                          formData.children.map((child) {
-                            return DropdownMenuItem(
-                              value: child.id,
-                              child: Text(child.fullName),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedChildId = value;
-                        });
-                      },
-                      validator:
-                          (value) => value == null ? 'Выберите ребенка' : null,
-                      isExpanded: true,
-                    ), */
+
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _priceController,
@@ -1301,26 +1221,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
               ),
               // TODO: Add validation equivalent if needed
             ),
-            // Выпадающий список Сотрудников (OLD)
-            /*
-            DropdownButtonFormField<int>(
-              value: _selectedEmployeeId,
-              hint: const Text('Сотрудник'),
-              items: state.formData.employees.map((employee) {
-                return DropdownMenuItem(
-                  value: employee.id,
-                  child: Text(employee.fullName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedEmployeeId = value;
-                });
-              },
-              validator: (value) => value == null ? 'Выберите сотрудника' : null,
-              isExpanded: true,
-            ),
-            */
+
             const SizedBox(height: 8),
             // --- Activity Type Dropdown ---
             FilterableDropdown<ActivityType>(
@@ -1348,28 +1249,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
               ),
               // TODO: Add validation equivalent if needed
             ),
-            // Выпадающий список Услуг (Типов занятий) (OLD)
-            /*
-            DropdownButtonFormField<int>(
-              value: _selectedActivityTypeId,
-              hint: const Text('Услуга'),
-              items: state.formData.activityTypes.map((activity) {
-                return DropdownMenuItem(
-                  value: activity.id,
-                  child: Text(activity.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedActivityTypeId = value;
-                  _updatePriceFromActivity(state.formData.activityTypes);
-                   _updateDurationFromActivity(state.formData.activityTypes);
-                });
-              },
-              validator: (value) => value == null ? 'Выберите услугу' : null,
-              isExpanded: true,
-            ),
-            */
+
             const SizedBox(height: 8),
             // --- Child Dropdown ---
             FilterableDropdown<Child>(
@@ -1398,26 +1278,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
               ),
               // TODO: Add validation equivalent if needed
             ),
-            // Выпадающий список Детей (OLD)
-            /*
-            DropdownButtonFormField<int>(
-              value: _selectedChildId,
-              hint: const Text('Ребенок'),
-              items: state.formData.children.map((child) {
-                return DropdownMenuItem(
-                  value: child.id,
-                  child: Text(child.fullName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedChildId = value;
-                });
-              },
-              validator: (value) => value == null ? 'Выберите ребенка' : null,
-              isExpanded: true,
-            ),
-            */
+
             const SizedBox(height: 16),
             TextFormField(
               controller: _durationController,
@@ -1503,18 +1364,6 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     } else {
       _priceController.clear();
     }
-    /* if (_selectedActivityTypeId != null) {
-      try {
-        final selectedActivity =
-            activities.firstWhere((a) => a.id == _selectedActivityTypeId);
-        _priceController.text = selectedActivity.defaultPrice.toStringAsFixed(2);
-      } catch (e) {
-        print('Error finding price for activity type: $e');
-        _priceController.clear();
-      }
-    } else {
-      _priceController.clear();
-    } */
   }
 
   void _updateDurationFromActivity(
@@ -1528,19 +1377,6 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     } else {
       _durationController.clear();
     }
-
-    /* if (_selectedActivityTypeId != null) {
-      try {
-        final selectedActivity =
-            activities.firstWhere((a) => a.id == _selectedActivityTypeId);
-        _durationController.text = selectedActivity.defaultDurationMinutes.toString();
-      } catch (e) {
-        print('Error finding duration for activity type: $e');
-        _durationController.clear();
-      }
-    } else {
-      _durationController.clear();
-    } */
   }
 
   // Переменная для хранения решения пользователя о списании средств
@@ -1562,10 +1398,16 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     if (parent == null) return;
 
     // Получаем стоимость занятия и используем актуальный баланс из parent модели, как в clients_screen
-    await _proceedWithPaymentDialog(parent.balance, widget.session.price.toInt());
+    await _proceedWithPaymentDialog(
+      parent.balance,
+      widget.session.price.toInt(),
+    );
   }
 
-  Future<void> _proceedWithPaymentDialog(double currentBalance, int sessionPrice) async {
+  Future<void> _proceedWithPaymentDialog(
+    double currentBalance,
+    int sessionPrice,
+  ) async {
     final double newBalance = currentBalance - sessionPrice;
     final shouldDeduct = await showDialog<bool>(
       context: context,
@@ -1673,7 +1515,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
       BlocProvider.of<ScheduleBloc>(context).add(
         UpdateExistingSession(updatedDomainSession),
       ); // <-- Pass domain Session
-      
+
       // Если пользователь согласился списать деньги с баланса родителя,
       // и сессия помечена как оплаченная, то списываем средства
       if (_shouldDeductPayment && _isPaid && _selectedChildId != null) {

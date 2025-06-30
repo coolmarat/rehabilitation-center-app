@@ -89,7 +89,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     LoadSessionsForDay event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ScheduleLoading());
+    emit(ScheduleLoading(groupedSessions: state.groupedSessions));
     try {
       final startOfMonth = DateTime(event.date.year, event.date.month, 1);
       final endOfMonth = DateTime(event.date.year, event.date.month + 1, 0);
@@ -109,10 +109,14 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           selectedDate: event.date,
           sessions: sessionsForSelectedDay,
           allSessionsInView: allSessionsInView,
+          groupedSessions: _groupSessionsByDay(allSessionsInView),
         ),
       );
     } catch (e) {
-      emit(ScheduleError('Ошибка загрузки сессий: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка загрузки сессий: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
     }
   }
 
@@ -120,12 +124,25 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     LoadScheduleFormData event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ScheduleFormDataLoading());
+    // Уже загружено, но нужно убедиться, что сессии не потеряны
+    if (state is ScheduleFormDataLoaded) {
+      // Если сессии есть, просто выходим
+      if (state.groupedSessions.isNotEmpty) return;
+      // Если сессий нет, перезагружаем с ними
+    }
+
+    emit(ScheduleFormDataLoading(groupedSessions: state.groupedSessions));
     try {
       final formData = await _getScheduleFormData.call();
-      emit(ScheduleFormDataLoaded(formData: formData));
+      emit(ScheduleFormDataLoaded(
+        formData: formData,
+        groupedSessions: state.groupedSessions, // Передаем сессии дальше
+      ));
     } catch (e) {
-      emit(ScheduleError('Ошибка загрузки данных для формы: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка загрузки данных для формы: ${e.toString()}',
+        groupedSessions: state.groupedSessions, // Сохраняем сессии при ошибке
+      ));
     }
   }
 
@@ -133,7 +150,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     AddNewSession event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ScheduleAdding());
+    emit(ScheduleAdding(groupedSessions: state.groupedSessions));
     try {
       final newSession = Session(
         id: 0,
@@ -164,10 +181,13 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         );
       }
 
-      emit(ScheduleAddSuccess());
+      emit(ScheduleAddSuccess(groupedSessions: state.groupedSessions));
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
-      emit(ScheduleError('Ошибка добавления сессии и списания баланса: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка добавления сессии и списания баланса: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
       // Перезагружаем сессии, чтобы пользователь видел актуальное состояние, даже если списание не удалось
       add(LoadSessionsForDay(_selectedDate));
     }
@@ -177,13 +197,16 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     UpdateExistingSession event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ScheduleUpdating());
+    emit(ScheduleUpdating(groupedSessions: state.groupedSessions));
     try {
       await _updateSession(event.updatedSession);
-      emit(ScheduleUpdateSuccess());
+      emit(ScheduleUpdateSuccess(groupedSessions: state.groupedSessions));
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
-      emit(ScheduleError('Ошибка обновления сессии: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка обновления сессии: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
       add(LoadSessionsForDay(_selectedDate));
     }
   }
@@ -192,13 +215,16 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     DeleteExistingSession event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ScheduleDeleting());
+    emit(ScheduleDeleting(groupedSessions: state.groupedSessions));
     try {
       await _deleteSession(event.sessionId);
-      emit(ScheduleDeleteSuccess());
+      emit(ScheduleDeleteSuccess(groupedSessions: state.groupedSessions));
       add(LoadSessionsForDay(_selectedDate));
     } catch (e) {
-      emit(ScheduleError('Ошибка удаления сессии: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка удаления сессии: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
       add(LoadSessionsForDay(_selectedDate));
     }
   }
@@ -207,7 +233,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     AddRecurringSessions event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ScheduleAdding());
+    emit(ScheduleAdding(groupedSessions: state.groupedSessions));
     try {
       final List<DateTime> sessionDates = [];
       for (int i = 0; i < event.numberOfSessions; i++) {
@@ -228,7 +254,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         event.durationMinutes,
       );
       if (conflictingDates.isNotEmpty) {
-        emit(ScheduleRecurringConflict(conflictingDates));
+        emit(ScheduleRecurringConflict(
+          conflictingDates: conflictingDates,
+          groupedSessions: state.groupedSessions,
+        ));
       } else {
         final List<Session> newSessions = sessionDates.map((dateTime) {
           return Session(
@@ -243,11 +272,14 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           );
         }).toList();
         await _addMultipleSessions(newSessions);
-        emit(ScheduleAddSuccess());
+        emit(ScheduleAddSuccess(groupedSessions: state.groupedSessions));
         add(LoadSessionsForDay(_selectedDate));
       }
     } catch (e) {
-      emit(ScheduleError(e.toString()));
+      emit(ScheduleError(
+        message: 'Ошибка добавления сессий: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
     }
   }
 
@@ -272,7 +304,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         final currentState = state as ScheduleFormDataLoaded;
         emit(currentState.copyWith(isBalanceLoading: false));
       } else {
-        emit(ScheduleError('Ошибка загрузки баланса: ${e.toString()}'));
+        emit(ScheduleError(
+          message: 'Ошибка загрузки баланса: ${e.toString()}',
+          groupedSessions: state.groupedSessions,
+        ));
       }
     }
   }
@@ -283,10 +318,13 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   ) async {
     try {
       final parentIdEither = await _getParentIdByChildId(event.childId);
-      
+
       await parentIdEither.fold(
         (failure) async {
-          emit(ScheduleError('Не удалось найти родителя для списания баланса.'));
+          emit(ScheduleError(
+            message: 'Не удалось найти родителя для списания баланса.',
+            groupedSessions: state.groupedSessions,
+          ));
         },
         (parentId) async {
           // Вычитаем сумму из баланса родителя (передаем отрицательное значение для списания)
@@ -296,10 +334,13 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
               amount: -event.amount, // Отрицательное значение для списания
             ),
           );
-          
+
           await result.fold(
             (failure) async {
-              emit(ScheduleError('Ошибка обновления баланса: $failure'));
+              emit(ScheduleError(
+                message: 'Ошибка обновления баланса: $failure',
+                groupedSessions: state.groupedSessions,
+              ));
             },
             (_) async {
               // Обновляем баланс в интерфейсе
@@ -317,7 +358,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
       );
     } catch (e) {
       if (!emit.isDone) {
-        emit(ScheduleError('Ошибка обновления баланса: ${e.toString()}'));
+        emit(ScheduleError(
+          message: 'Ошибка обновления баланса: ${e.toString()}',
+          groupedSessions: state.groupedSessions,
+        ));
       }
     }
   }
@@ -355,72 +399,84 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           sessions: sessionsForDay,
           filteredEmployeeId: event.employeeId,
           filteredChildId: event.childId,
+          groupedSessions: state.groupedSessions,
         ));
       }
     } catch (e) {
-      emit(ScheduleError('Ошибка фильтрации сессий: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка фильтрации сессий: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
     }
   }
 
   // Получение данных о родителе по ID ребенка
   Future<void> _onGetParentForChild(
-    GetParentForChild event, 
+    GetParentForChild event,
     Emitter<ScheduleState> emit,
   ) async {
-    emit(ParentDataLoading());
+    emit(ParentDataLoading(groupedSessions: state.groupedSessions));
     try {
       // Получаем ID родителя по ID ребенка
       final parentIdEither = await _getParentIdByChildId(event.childId);
-      
+
       await parentIdEither.fold(
         (failure) {
-          emit(ScheduleError('Не удалось найти родителя: $failure'));
+          emit(ScheduleError(
+            message: 'Не удалось найти родителя: $failure',
+            groupedSessions: state.groupedSessions,
+          ));
         },
         (parentId) async {
           // Здесь бы получать данные о родителе, включая баланс
-          // Но так как это перенос существующего кода, просто используем
-          // уже имеющийся метод получения баланса клиента
+          // Пока просто возвращаем ID
           final balance = await _getClientSessionBalance(event.childId);
-          
           emit(ParentDataLoaded(
             parentId: parentId,
             parentBalance: balance.toDouble(),
+            groupedSessions: state.groupedSessions,
           ));
         },
       );
     } catch (e) {
-      emit(ScheduleError('Ошибка получения данных родителя: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка получения данных родителя: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
     }
   }
 
-  // Обновление полей сессии (цена и длительность) на основе выбранного типа активности
+  // Обновление полей цены и длительности на основе выбранного типа активности
   Future<void> _onUpdateSessionFieldsFromActivity(
     UpdateSessionFieldsFromActivity event,
     Emitter<ScheduleState> emit,
   ) async {
     try {
-      // Для этого нам нужны данные формы с типами активности
       if (state is ScheduleFormDataLoaded) {
         final currentState = state as ScheduleFormDataLoaded;
-        // Ищем выбранный тип активности
         final selectedActivity = currentState.formData.activityTypes.firstWhere(
           (activity) => activity.id == event.activityTypeId,
-          orElse: () => throw Exception('Тип активности не найден'),
         );
-        
-        // Отправляем состояние с ценой и длительностью
+
         emit(ActivityFieldsState(
           price: selectedActivity.defaultPrice,
           durationMinutes: selectedActivity.durationInMinutes,
+          groupedSessions: state.groupedSessions,
         ));
-        
+
         // Возвращаем состояние формы для дальнейшей работы
         emit(currentState);
       } else {
-        emit(ScheduleError('Данные формы не загружены'));
+        emit(ScheduleError(
+          message: 'Данные формы не загружены',
+          groupedSessions: state.groupedSessions,
+        ));
       }
     } catch (e) {
-      emit(ScheduleError('Ошибка обновления полей: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка обновления полей: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
     }
   }
 
@@ -429,31 +485,48 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     ProcessPaymentConfirmation event,
     Emitter<ScheduleState> emit,
   ) async {
+    emit(PaymentProcessing(groupedSessions: state.groupedSessions));
     try {
-      // Получаем ID родителя по ID ребенка
       final parentIdEither = await _getParentIdByChildId(event.childId);
-      
+
       await parentIdEither.fold(
         (failure) {
-          emit(ScheduleError('Не удалось найти родителя для подтверждения оплаты: $failure'));
+          emit(ScheduleError(
+            message: 'Не удалось найти родителя для подтверждения оплаты: $failure',
+            groupedSessions: state.groupedSessions,
+          ));
         },
         (parentId) async {
           // Запрашиваем актуальный баланс
-          final balance = await _getClientSessionBalance(event.childId);
-          final currentBalance = balance.toDouble();
+          final currentBalance = await _getClientSessionBalance(event.childId);
           final newBalance = currentBalance - event.sessionPrice;
-          
-          // Отправляем состояние для диалога подтверждения
+
           emit(PaymentConfirmationState(
             childId: event.childId,
-            currentBalance: currentBalance,
+            currentBalance: currentBalance.toDouble(),
             sessionPrice: event.sessionPrice,
-            newBalance: newBalance,
+            newBalance: newBalance.toDouble(),
+            groupedSessions: state.groupedSessions,
           ));
         },
       );
     } catch (e) {
-      emit(ScheduleError('Ошибка обработки подтверждения оплаты: ${e.toString()}'));
+      emit(ScheduleError(
+        message: 'Ошибка обработки подтверждения оплаты: ${e.toString()}',
+        groupedSessions: state.groupedSessions,
+      ));
     }
+  }
+
+  Map<DateTime, List<SessionDetails>> _groupSessionsByDay(List<SessionDetails> sessions) {
+    final Map<DateTime, List<SessionDetails>> data = {};
+    for (final session in sessions) {
+      final date = DateTime(session.dateTime.year, session.dateTime.month, session.dateTime.day);
+      if (data[date] == null) {
+        data[date] = [];
+      }
+      data[date]!.add(session);
+    }
+    return data;
   }
 }

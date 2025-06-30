@@ -64,18 +64,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // чтобы сразу показать актуальные данные без задержек.
   List<SessionDetails> _getSessionsForDay(DateTime day) {
     final blocState = context.read<ScheduleBloc>().state;
+    // Ключ для карты должен быть без времени
+    final dateKey = DateTime(day.year, day.month, day.day);
 
-    List<SessionDetails> sourceSessions = [];
-    if (blocState is ScheduleLoaded) {
-      sourceSessions = blocState.allSessionsInView;
-    } else if (blocState is FilteredSessionsState) {
-      sourceSessions = blocState.sessions;
-    }
-
-    // Фильтруем по конкретному дню
-    var daySessions = sourceSessions
-        .where((s) => isSameDay(s.dateTime, day))
-        .toList();
+    // Получаем сессии для данного дня из общего состояния
+    var daySessions = blocState.groupedSessions[dateKey] ?? [];
 
     // Применяем активные фильтры, если установлены
     if (_selectedEmployee != null) {
@@ -97,20 +90,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // Никаких событий здесь не диспатчим, чтобы не вызывать лишних перестроений.
   List<SessionDetails> _getSessionsForCalendarDay(DateTime day) {
     final blocState = context.read<ScheduleBloc>().state;
+    // Ключ для карты должен быть без времени
+    final dateKey = DateTime(day.year, day.month, day.day);
 
-    List<SessionDetails> sourceSessions = [];
-    if (blocState is ScheduleLoaded) {
-      // Используем allSessionsInView, чтобы иметь данные по всему месяцу
-      sourceSessions = blocState.allSessionsInView;
-    } else if (blocState is FilteredSessionsState) {
-      // Если отображается конкретный день после фильтрации, markers тоже нужны
-      sourceSessions = blocState.sessions;
-    }
-
-    // Фильтруем по дню
-    var daySessions = sourceSessions
-        .where((s) => isSameDay(s.dateTime, day))
-        .toList();
+    // Получаем сессии для данного дня из общего состояния
+    var daySessions = blocState.groupedSessions[dateKey] ?? [];
 
     // Применяем активные фильтры сотрудника и ребенка, если есть
     if (_selectedEmployee != null) {
@@ -400,16 +384,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               // Use Expanded to take remaining space
               child: BlocBuilder<ScheduleBloc, ScheduleState>(
                 builder: (context, state) {
-                  // Формируем список сессий для отображения
-                  List<SessionDetails> displayedSessions = [];
-                  if (state is ScheduleLoaded) {
-                    final DateTime dayForList = _selectedDay ?? state.selectedDate;
-                    displayedSessions = _getSessionsForDay(dayForList);
-                  } else if (state is FilteredSessionsState) {
-                    displayedSessions = state.sessions;
-                  } else if (state is ScheduleLoading) {
+                  if (state is ScheduleLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
+
+                  // Для любого состояния, кроме загрузки, получаем сессии для выбранного дня.
+                  // _selectedDay не должен быть null, но для надежности используем _focusedDay как запасной вариант.
+                  final dayToDisplay = _selectedDay ?? _focusedDay;
+                  final displayedSessions = _getSessionsForDay(dayToDisplay);
 
                   if (displayedSessions.isEmpty) {
                     return const Center(

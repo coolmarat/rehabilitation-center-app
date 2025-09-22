@@ -72,19 +72,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
     // Применяем активные фильтры, если установлены
     if (_selectedEmployee != null) {
-      daySessions = daySessions
-          .where((s) => s.employeeId == _selectedEmployee!.id)
-          .toList();
+      daySessions =
+          daySessions
+              .where((s) => s.employeeId == _selectedEmployee!.id)
+              .toList();
     }
     if (_selectedChild != null) {
-      daySessions = daySessions
-          .where((s) => s.childId == _selectedChild!.id)
-          .toList();
+      daySessions =
+          daySessions.where((s) => s.childId == _selectedChild!.id).toList();
     }
 
     return daySessions;
   }
-  
+
   // Метод, который TableCalendar использует для отображения индикаторов
   // Он синхронно возвращает список сессий для конкретного дня из текущего состояния BLoC.
   // Никаких событий здесь не диспатчим, чтобы не вызывать лишних перестроений.
@@ -98,14 +98,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
     // Применяем активные фильтры сотрудника и ребенка, если есть
     if (_selectedEmployee != null) {
-      daySessions = daySessions
-          .where((s) => s.employeeId == _selectedEmployee!.id)
-          .toList();
+      daySessions =
+          daySessions
+              .where((s) => s.employeeId == _selectedEmployee!.id)
+              .toList();
     }
     if (_selectedChild != null) {
-      daySessions = daySessions
-          .where((s) => s.childId == _selectedChild!.id)
-          .toList();
+      daySessions =
+          daySessions.where((s) => s.childId == _selectedChild!.id).toList();
     }
 
     return daySessions;
@@ -212,8 +212,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
                       return TableCalendar(
                         locale: 'ru_RU', // Set locale if needed
-                        firstDay: DateTime.utc(2020, 1, 1),
-                        lastDay: DateTime.utc(2030, 12, 31),
+                        firstDay: DateTime.utc(DateTime.now().year - 5, 1, 1),
+                        lastDay: DateTime.utc(DateTime.now().year + 5, 12, 31),
                         focusedDay:
                             currentFocusedDay, // Use state's date or local _focusedDay
                         selectedDayPredicate: (day) {
@@ -225,7 +225,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             setState(() {
                               _selectedDay = selectedDay;
                               _focusedDay = focusedDay;
-
                             });
                             // Trigger loading sessions for the newly selected day from the source
                             BlocProvider.of<ScheduleBloc>(
@@ -236,15 +235,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         calendarFormat:
                             CalendarFormat.month, // Or week, twoWeeks
                         onPageChanged: (focusedDay) {
-                           // Update the locally stored focused day so other widgets relying on it stay in sync
-                           setState(() {
-                             _focusedDay = focusedDay;
-                           });
-                           // Pre-load sessions for the newly visible month so that markers are shown
-                           BlocProvider.of<ScheduleBloc>(context).add(
-                             LoadSessionsForDay(focusedDay),
-                           );
-                         },
+                          // Update the locally stored focused day so other widgets relying on it stay in sync
+                          setState(() {
+                            _focusedDay = focusedDay;
+                          });
+                          // Pre-load sessions for the newly visible month so that markers are shown
+                          BlocProvider.of<ScheduleBloc>(
+                            context,
+                          ).add(LoadSessionsForDay(focusedDay));
+                        },
                         // Add other customizations as needed (header style, day builders, etc.)
                         headerStyle: HeaderStyle(
                           formatButtonVisible:
@@ -268,15 +267,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         // Add markers for sessions
                         calendarBuilders: CalendarBuilders(
                           markerBuilder: (context, day, events) {
-                            // 'events' here is the list of sessions for the day
                             if (events.isNotEmpty) {
+                              // Cast events to SessionDetails
+                              final sessions = events.cast<SessionDetails>();
+                              // Check if there's any unpaid session
+                              final hasUnpaid = sessions.any(
+                                (session) => !session.isPaid,
+                              );
+
+                              final markerColor =
+                                  hasUnpaid
+                                      ? Colors.pink[100]!
+                                      : Theme.of(context).colorScheme.secondary;
+
                               return Positioned(
                                 right: 1,
                                 bottom: 1,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.secondary,
+                                    color: markerColor,
                                     shape: BoxShape.circle,
                                   ),
                                   width: 16.0,
@@ -335,13 +344,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               handleSelected: (Employee selectedEmployee) {
                                 setState(() {
                                   _selectedEmployee = selectedEmployee;
-
                                 });
                               },
                               onClearSelected: () {
                                 setState(() {
                                   _selectedEmployee = null;
-
                                 });
                               },
                             ),
@@ -362,13 +369,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               handleSelected: (Child selectedChild) {
                                 setState(() {
                                   _selectedChild = selectedChild;
-
                                 });
                               },
                               onClearSelected: () {
                                 setState(() {
                                   _selectedChild = null;
-
                                 });
                               },
                             ),
@@ -712,7 +717,6 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                       MainAxisSize.min, // Чтобы диалог не растягивался
                   children: [
                     ListTile(
-
                       title: Text(
                         'Время: ${_selectedTime?.format(context) ?? 'Не выбрано'}',
                       ),
@@ -1398,22 +1402,42 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
 
     // Делегируем обработку оплаты в BLoC
     final scheduleBloc = BlocProvider.of<ScheduleBloc>(context);
+
+    // Показываем индикатор загрузки
+    final loadingOverlay = OverlayEntry(
+      builder: (context) => Container(
+        color: Colors.black.withOpacity(0.3),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
     
+    // Не показываем оверлей до получения состояния PaymentConfirmationState
+
     // Отправляем событие для обработки подтверждения оплаты
-    scheduleBloc.add(ProcessPaymentConfirmation(
-      childId: _selectedChildId!,
-      sessionPrice: widget.session.price.toDouble(),
-    ));
-    
-    // Подписываемся на изменения состояния для обработки результата
+    scheduleBloc.add(
+      ProcessPaymentConfirmation(
+        childId: _selectedChildId!,
+        sessionPrice: widget.session.price.toDouble(),
+      ),
+    );
+
+    bool dialogShown = false;
     final completer = Completer<void>();
-    final subscription = scheduleBloc.stream.listen((state) {
-      if (state is PaymentConfirmationState) {
+    late StreamSubscription subscription;
+    
+    subscription = scheduleBloc.stream.listen((state) async {
+      if (state is PaymentConfirmationState && !dialogShown) {
+        dialogShown = true;
+        print('Debug: Showing payment dialog with balance: ${state.currentBalance}');
+        
         // Отображаем диалог с полученными данными
-        _proceedWithPaymentDialog(
+        await _proceedWithPaymentDialog(
           state.currentBalance,
           state.sessionPrice.toInt(),
-        ).then((_) => completer.complete());
+        );
+        completer.complete();
       } else if (state is ScheduleError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1422,26 +1446,35 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
           ),
         );
         completer.complete();
+      } else if (state is PaymentProcessing && !dialogShown) {
+        // Добавляем таймаут на случай если никакой ответ не приходит
+        Future.delayed(const Duration(seconds: 3), () {
+          if (!dialogShown && !completer.isCompleted) {
+            try {
+              if (loadingOverlay.mounted) {
+                loadingOverlay.remove();
+              }
+            } catch (e) {
+              print('Error removing overlay in timeout: $e');
+            }
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ошибка получения баланса'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            completer.complete();
+          }
+        });
       }
     });
+
+    // Ждем завершения диалога без ограничения по времени
+    await completer.future;
     
-    try {
-      // Ждем завершения диалога
-      await completer.future.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Тайм-аут при обработке оплаты'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        },
-      );
-    } finally {
-      // Очищаем подписку
-      await subscription.cancel();
-    }
+    // Очищаем подписку после завершения
+    await subscription.cancel();
   }
 
   Future<void> _proceedWithPaymentDialog(
@@ -1496,6 +1529,39 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     _shouldDeductPayment = shouldDeduct == true;
     if (_shouldDeductPayment) {
       _sessionPriceForDeduction = sessionPrice.toDouble();
+      
+      // Если пользователь подтвердил оплату, закрываем все диалоги и выполняем оплату
+      final scheduleBloc = BlocProvider.of<ScheduleBloc>(context);
+      scheduleBloc.add(
+        DeductPaymentFromBalance(
+          childId: _selectedChildId!,
+          amount: sessionPrice.toDouble(),
+        ),
+      );
+      
+      // Закрываем все открытые диалоги и возвращаемся к расписанию
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Закрываем диалог оплаты
+      }
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Закрываем диалог редактирования занятия, если он есть
+      }
+      
+      // Показываем уведомление об успешной оплате
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Оплата произведена успешно'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      // Если пользователь отменил оплату, тоже закрываем все диалоги
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Закрываем диалог оплаты
+      }
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Закрываем диалог редактирования занятия, если он есть
+      }
     }
   }
 

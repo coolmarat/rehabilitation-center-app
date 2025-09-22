@@ -111,6 +111,12 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     // Напрямую вызываем метод из DAO, так как репозиторий имеет доступ к базе данных
     return await _database.paymentDao.getClientSessionBalance(clientId);
   }
+  
+  @override
+  Future<int> getParentSessionBalance(int parentId) async {
+    // Используем новый метод из DAO для получения баланса родителя
+    return await _database.paymentDao.getParentSessionBalance(parentId);
+  }
 
   @override
   Future<List<SessionDetails>> getSessionsForDay(DateTime date) async {

@@ -36,6 +36,9 @@ abstract class ScheduleRepository {
   // Добавить несколько сессий
   Future<void> addMultipleSessions(List<Session> sessions);
 
-  // Получить баланс занятий клиента
+  // Получить баланс занятий клиента (ребенка)
   Future<int> getClientSessionBalance(int clientId);
+  
+  // Получить баланс занятий родителя
+  Future<int> getParentSessionBalance(int parentId);
 }

@@ -10,15 +10,17 @@ import 'package:table_calendar/table_calendar.dart'; // Import table_calendar fo
 import 'package:rehabilitation_center_app/features/schedule/domain/entities/schedule_form_data.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/session_model.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/entities/session_details.dart';
-import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_session.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_parent_session_balance.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_schedule_form_data.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_sessions_for_day.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/update_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_session.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_id_by_child_id.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_balance.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart' as gcsb;
 
 part 'schedule_event.dart';
@@ -33,8 +35,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   final CheckRecurringSessionConflicts _checkRecurringSessionConflicts;
   final AddMultipleSessions _addMultipleSessions;
   final gcsb.GetClientSessionBalance _getClientSessionBalance;
+  final GetParentSessionBalance _getParentSessionBalance;
   final GetParentIdByChildId _getParentIdByChildId;
   final UpdateParentBalance _updateParentBalance;
+  final GetParentBalance _getParentBalance;
 
   DateTime _selectedDate = DateTime.now();
 
@@ -47,8 +51,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     required CheckRecurringSessionConflicts checkRecurringSessionConflicts,
     required AddMultipleSessions addMultipleSessions,
     required gcsb.GetClientSessionBalance getClientSessionBalance,
+    required GetParentSessionBalance getParentSessionBalance,
     required GetParentIdByChildId getParentIdByChildId,
     required UpdateParentBalance updateParentBalance,
+    required GetParentBalance getParentBalance,
   })  : _getSessionsForDay = getSessionsForDay,
         _getScheduleFormData = getScheduleFormData,
         _addSession = addSession,
@@ -57,8 +63,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         _checkRecurringSessionConflicts = checkRecurringSessionConflicts,
         _addMultipleSessions = addMultipleSessions,
         _getClientSessionBalance = getClientSessionBalance,
+        _getParentSessionBalance = getParentSessionBalance,
         _getParentIdByChildId = getParentIdByChildId,
         _updateParentBalance = updateParentBalance,
+        _getParentBalance = getParentBalance,
         super(ScheduleInitial()) {
     on<SelectedDateChanged>(_onSelectedDateChanged);
     on<LoadSessionsForDay>(_onLoadSessionsForDay);
@@ -497,8 +505,19 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           ));
         },
         (parentId) async {
-          // Запрашиваем актуальный баланс
-          final currentBalance = await _getClientSessionBalance(event.childId);
+          // Запрашиваем актуальный баланс РОДИТЕЛЯ напрямую из сущности Parent
+          final parentBalanceEither = await _getParentBalance(parentId);
+          final currentBalance = await parentBalanceEither.fold(
+            (failure) {
+              print('Failed to get parent balance: $failure');
+              return -1.0; // Ошибка получения баланса
+            },
+            (balance) {
+              print('Parent ID: $parentId, Current balance from Parent entity: $balance');
+              return balance;
+            },
+          );
+          
           final newBalance = currentBalance - event.sessionPrice;
 
           emit(PaymentConfirmationState(

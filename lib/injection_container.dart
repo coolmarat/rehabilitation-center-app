@@ -30,6 +30,7 @@ import 'package:rehabilitation_center_app/features/clients/domain/usecases/delet
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_balance.dart';
 
 
 // --- Импорты для фичи Расписание ---
@@ -44,6 +45,7 @@ import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/sc
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_parent_session_balance.dart';
 // ----------------------------------
 
 // Сервис локатор
@@ -126,6 +128,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => DeleteChild(sl()));
   sl.registerLazySingleton(() => GetParentIdByChildId(sl()));
   sl.registerLazySingleton(() => UpdateParentBalance(sl()));
+  sl.registerLazySingleton(() => GetParentBalance(sl()));
 
   // Repository
   sl.registerLazySingleton<ClientRepository>(
@@ -152,8 +155,10 @@ Future<void> init() async {
       checkRecurringSessionConflicts: sl(), // Provide the dependency
       addMultipleSessions: sl(), // Provide the dependency
       getClientSessionBalance: sl(),
+      getParentSessionBalance: sl(), // Добавляем новый use case
       getParentIdByChildId: sl(),
       updateParentBalance: sl(),
+      getParentBalance: sl(), // Добавляем GetParentBalance для корректного получения баланса
     ),
   );
 
@@ -170,7 +175,13 @@ Future<void> init() async {
     () => AddMultipleSessions(sl()),
   ); // Register new use case
 
-  sl.registerLazySingleton(() => GetClientSessionBalance(sl()));
+  sl.registerLazySingleton(
+      () => GetClientSessionBalance(sl<ScheduleRepository>()));
+
+  // Регистрируем новый UseCase для получения баланса родителя
+  sl.registerLazySingleton(
+      () => GetParentSessionBalance(sl<ScheduleRepository>()));
+
   // Use cases, которые относятся к клиентам, но используются в расписании, теперь в секции Clients
 
   // Repository

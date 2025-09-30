@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:rehabilitation_center_app/core/database/app_database.dart';
+import 'package:rehabilitation_center_app/core/services/database_service.dart';
 import 'package:rehabilitation_center_app/features/employees/data/datasources/employee_local_data_source.dart';
 import 'package:rehabilitation_center_app/features/employees/data/repositories/employee_repository_impl.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/repositories/employee_repository.dart';
@@ -200,5 +201,9 @@ Future<void> init() async {
     sl.registerSingleton<AppDatabase>(AppDatabase());
   }
 
+  // Database Service
+  sl.registerLazySingleton<DatabaseService>(
+    () => DatabaseService(sl()),
+  );
 
 }

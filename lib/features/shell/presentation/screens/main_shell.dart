@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // Убедимся, что импорт правильный
+import 'package:rehabilitation_center_app/core/services/database_service.dart';
+import 'package:rehabilitation_center_app/features/shell/presentation/widgets/database_reset_dialog.dart';
+import 'package:rehabilitation_center_app/injection_container.dart' as di;
 
 // TODO: Импортировать экраны для каждой секции, когда они будут созданы
 // import 'package:rehabilitation_center_app/features/employees/presentation/screens/employees_screen.dart';
@@ -85,51 +88,145 @@ class _MainShellState extends State<MainShell> {
     return 0; // По умолчанию
   }
 
+  // Функция для сброса базы данных
+  Future<void> _resetDatabase() async {
+    try {
+      // Получаем сервис базы данных
+      final databaseService = di.sl<DatabaseService>();
+      
+      // Получаем путь к базе данных
+      final dbPath = await databaseService.getDatabasePath();
+      
+      // Показываем диалог подтверждения
+      final confirmed = await showDatabaseResetDialog(context, dbPath);
+      
+      if (!confirmed) {
+        return; // Пользователь отменил действие
+      }
+
+      // Показываем индикатор загрузки
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      // Выполняем сброс базы данных
+      await databaseService.resetDatabase();
+
+      // Закрываем индикатор загрузки
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Показываем сообщение об успехе
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('База данных успешно пересоздана'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Переходим на главную страницу (расписание)
+      if (mounted) {
+        context.go('/schedule');
+      }
+    } catch (e) {
+      // Закрываем индикатор загрузки, если он открыт
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Показываем сообщение об ошибке
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при пересоздании базы данных: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: <Widget>[
-          NavigationRail(
-            // Определяем выбранный индекс на основе текущего маршрута
-            selectedIndex: _calculateSelectedIndex(context),
-            // Вызываем навигацию при выборе пункта
-            onDestinationSelected: _goBranch,
-            labelType:
-                NavigationRailLabelType
-                    .selected, // Показывать текст только для выбранного элемента
-            destinations: const <NavigationRailDestination>[
-              NavigationRailDestination(
-                icon: Icon(Icons.calendar_today_outlined),
-                selectedIcon: Icon(Icons.calendar_today),
-                label: Text('Расписание'),
+          Column(
+            children: [
+              Expanded(
+                child: NavigationRail(
+                  // Определяем выбранный индекс на основе текущего маршрута
+                  selectedIndex: _calculateSelectedIndex(context),
+                  // Вызываем навигацию при выборе пункта
+                  onDestinationSelected: _goBranch,
+                  labelType:
+                      NavigationRailLabelType
+                          .selected, // Показывать текст только для выбранного элемента
+                  destinations: const <NavigationRailDestination>[
+                    NavigationRailDestination(
+                      icon: Icon(Icons.calendar_today_outlined),
+                      selectedIcon: Icon(Icons.calendar_today),
+                      label: Text('Расписание'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.people_outline),
+                      selectedIcon: Icon(Icons.people),
+                      label: Text('Сотрудники'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.family_restroom_outlined),
+                      selectedIcon: Icon(Icons.family_restroom),
+                      label: Text('Клиенты'),
+                    ),
+                    // Переносим Виды услуг сюда
+                    NavigationRailDestination(
+                      icon: Icon(Icons.local_offer_outlined),
+                      selectedIcon: Icon(Icons.local_offer),
+                      label: Text('Виды услуг'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.analytics_outlined),
+                      selectedIcon: Icon(Icons.analytics),
+                      label: Text('Отчеты'),
+                    ),
+                    // NavigationRailDestination(
+                    //   icon: Icon(Icons.settings_outlined),
+                    //   selectedIcon: Icon(Icons.settings),
+                    //   label: Text('Настройки'),
+                    // ),
+                  ],
+                ),
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.people_outline),
-                selectedIcon: Icon(Icons.people),
-                label: Text('Сотрудники'),
+              // Кнопка сброса базы данных
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton.icon(
+                  onPressed: _resetDatabase,
+                  icon: const Icon(
+                    Icons.delete_forever,
+                    color: Colors.red,
+                  ),
+                  label: const Text(
+                    'Сбросить БД',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.withValues(alpha: 0.1),
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    minimumSize: const Size(120, 40),
+                  ),
+                ),
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.family_restroom_outlined),
-                selectedIcon: Icon(Icons.family_restroom),
-                label: Text('Клиенты'),
-              ),
-              // Переносим Виды услуг сюда
-              NavigationRailDestination(
-                icon: Icon(Icons.local_offer_outlined),
-                selectedIcon: Icon(Icons.local_offer),
-                label: Text('Виды услуг'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.analytics_outlined),
-                selectedIcon: Icon(Icons.analytics),
-                label: Text('Отчеты'),
-              ),
-              // NavigationRailDestination(
-              //   icon: Icon(Icons.settings_outlined),
-              //   selectedIcon: Icon(Icons.settings),
-              //   label: Text('Настройки'),
-              // ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),

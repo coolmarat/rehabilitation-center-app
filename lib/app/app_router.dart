@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-// Импортируем основной экран/shell навигации
-import 'package:rehabilitation_center_app/features/shell/presentation/screens/main_shell.dart';
-
-// Импортируем экраны для дочерних маршрутов
-import 'package:rehabilitation_center_app/features/employees/presentation/screens/employees_screen.dart'; 
+import 'package:rehabilitation_center_app/features/activity_types/presentation/screens/activity_types_screen.dart';
 // Импортируем новый экран Клиентов
 import 'package:rehabilitation_center_app/features/clients/presentation/screens/clients_screen.dart';
-// Импортируем экран Расписания
-import 'package:rehabilitation_center_app/features/schedule/presentation/screens/schedule_screen.dart';
-import 'package:rehabilitation_center_app/features/activity_types/presentation/screens/activity_types_screen.dart';
+// Импортируем экраны для дочерних маршрутов
+import 'package:rehabilitation_center_app/features/employees/presentation/screens/employees_screen.dart';
+import 'package:rehabilitation_center_app/features/integrity_check/presentation/screens/integrity_check_screen.dart';
 // Импортируем экран Финансового отчета
 import 'package:rehabilitation_center_app/features/reports/presentation/finance_report_screen.dart';
+// Импортируем экран Расписания
+import 'package:rehabilitation_center_app/features/schedule/presentation/screens/schedule_screen.dart';
+// Импортируем основной экран/shell навигации
+import 'package:rehabilitation_center_app/features/shell/presentation/screens/main_shell.dart';
 
 class AppRouter {
   // Ключ для основного навигатора (опционально, но может пригодиться)
@@ -44,7 +43,7 @@ class AppRouter {
             path: '/clients',
             builder: (BuildContext context, GoRouterState state) {
               // Заменяем заглушку на реальный экран
-              return const ClientsScreen(); 
+              return const ClientsScreen();
             },
           ),
           GoRoute(
@@ -62,18 +61,26 @@ class AppRouter {
             },
           ),
           // Добавим маршрут для настроек как пример
-           GoRoute(
+          GoRoute(
             path: '/settings', // Добавляем путь
-             builder: (BuildContext context, GoRouterState state) {
-               // TODO: Заменить на реальный SettingsScreen
-              return const Center(child: Text('Настройки (Заглушка)')); // Временная заглушка
+            builder: (BuildContext context, GoRouterState state) {
+              // TODO: Заменить на реальный SettingsScreen
+              return const Center(
+                child: Text('Настройки (Заглушка)'),
+              ); // Временная заглушка
             },
-           ),
+          ),
           // Add the new route for Activity Types
           GoRoute(
             path: '/activity-types',
             builder: (BuildContext context, GoRouterState state) {
               return const ActivityTypesScreen();
+            },
+          ),
+          GoRoute(
+            path: '/integrity-check',
+            builder: (BuildContext context, GoRouterState state) {
+              return const IntegrityCheckScreen();
             },
           ),
         ],

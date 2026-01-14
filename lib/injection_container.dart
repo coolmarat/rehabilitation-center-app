@@ -1,6 +1,29 @@
 import 'package:get_it/get_it.dart';
 import 'package:rehabilitation_center_app/core/database/app_database.dart';
+import 'package:rehabilitation_center_app/core/services/database_integrity_service.dart';
 import 'package:rehabilitation_center_app/core/services/database_service.dart';
+import 'package:rehabilitation_center_app/features/activity_types/data/repositories/activity_type_repository_impl.dart';
+import 'package:rehabilitation_center_app/features/activity_types/domain/repositories/activity_type_repository.dart';
+import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/add_activity_type.dart';
+import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/delete_activity_type.dart';
+import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/get_activity_types.dart';
+import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/update_activity_type.dart';
+import 'package:rehabilitation_center_app/features/activity_types/presentation/bloc/activity_type_bloc.dart';
+// --- Импорты для фичи Клиенты ---
+import 'package:rehabilitation_center_app/features/clients/data/datasources/client_local_data_source.dart';
+import 'package:rehabilitation_center_app/features/clients/data/repositories/client_repository_impl.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_balance.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_id_by_child_id.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
+import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
 import 'package:rehabilitation_center_app/features/employees/data/datasources/employee_local_data_source.dart';
 import 'package:rehabilitation_center_app/features/employees/data/repositories/employee_repository_impl.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/repositories/employee_repository.dart';
@@ -9,44 +32,20 @@ import 'package:rehabilitation_center_app/features/employees/domain/usecases/del
 import 'package:rehabilitation_center_app/features/employees/domain/usecases/get_employees.dart';
 import 'package:rehabilitation_center_app/features/employees/domain/usecases/update_employee.dart';
 import 'package:rehabilitation_center_app/features/employees/presentation/bloc/employee_bloc.dart';
-import 'package:rehabilitation_center_app/features/activity_types/data/repositories/activity_type_repository_impl.dart';
-import 'package:rehabilitation_center_app/features/activity_types/domain/repositories/activity_type_repository.dart';
-import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/add_activity_type.dart';
-import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/delete_activity_type.dart';
-import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/get_activity_types.dart';
-import 'package:rehabilitation_center_app/features/activity_types/domain/usecases/update_activity_type.dart';
-import 'package:rehabilitation_center_app/features/activity_types/presentation/bloc/activity_type_bloc.dart';
-
-// --- Импорты для фичи Клиенты ---
-import 'package:rehabilitation_center_app/features/clients/data/datasources/client_local_data_source.dart';
-import 'package:rehabilitation_center_app/features/clients/data/repositories/client_repository_impl.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/repositories/client_repository.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_id_by_child_id.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent_balance.dart';
-import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parents_with_children.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_parent.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_parent.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_parent.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/add_child.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/update_child.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/delete_child.dart';
-import 'package:rehabilitation_center_app/features/clients/domain/usecases/get_parent_balance.dart';
-
-
 // --- Импорты для фичи Расписание ---
 import 'package:rehabilitation_center_app/features/schedule/data/repositories/schedule_repository_impl.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/repositories/schedule_repository.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_session.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart';
+import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_parent_session_balance.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_schedule_form_data.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_sessions_for_day.dart';
 import 'package:rehabilitation_center_app/features/schedule/domain/usecases/update_session.dart';
-import 'package:rehabilitation_center_app/features/schedule/domain/usecases/delete_session.dart';
-import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart' hide GetClientSessionBalance;
-import 'package:rehabilitation_center_app/features/schedule/domain/usecases/check_recurring_session_conflicts.dart'; // Import new use case
-import 'package:rehabilitation_center_app/features/schedule/domain/usecases/add_multiple_sessions.dart'; // Import new use case
-import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_client_session_balance.dart';
-import 'package:rehabilitation_center_app/features/schedule/domain/usecases/get_parent_session_balance.dart';
+import 'package:rehabilitation_center_app/features/schedule/presentation/bloc/schedule_bloc.dart'
+    hide GetClientSessionBalance;
 // ----------------------------------
 
 // Сервис локатор
@@ -159,7 +158,8 @@ Future<void> init() async {
       getParentSessionBalance: sl(), // Добавляем новый use case
       getParentIdByChildId: sl(),
       updateParentBalance: sl(),
-      getParentBalance: sl(), // Добавляем GetParentBalance для корректного получения баланса
+      getParentBalance:
+          sl(), // Добавляем GetParentBalance для корректного получения баланса
     ),
   );
 
@@ -177,11 +177,13 @@ Future<void> init() async {
   ); // Register new use case
 
   sl.registerLazySingleton(
-      () => GetClientSessionBalance(sl<ScheduleRepository>()));
+    () => GetClientSessionBalance(sl<ScheduleRepository>()),
+  );
 
   // Регистрируем новый UseCase для получения баланса родителя
   sl.registerLazySingleton(
-      () => GetParentSessionBalance(sl<ScheduleRepository>()));
+    () => GetParentSessionBalance(sl<ScheduleRepository>()),
+  );
 
   // Use cases, которые относятся к клиентам, но используются в расписании, теперь в секции Clients
 
@@ -202,8 +204,10 @@ Future<void> init() async {
   }
 
   // Database Service
-  sl.registerLazySingleton<DatabaseService>(
-    () => DatabaseService(sl()),
-  );
+  sl.registerLazySingleton<DatabaseService>(() => DatabaseService(sl()));
 
+  // Database Integrity Service
+  sl.registerLazySingleton<DatabaseIntegrityService>(
+    () => DatabaseIntegrityService(sl()),
+  );
 }

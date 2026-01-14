@@ -93,13 +93,13 @@ class _MainShellState extends State<MainShell> {
     try {
       // Получаем сервис базы данных
       final databaseService = di.sl<DatabaseService>();
-      
+
       // Получаем путь к базе данных
       final dbPath = await databaseService.getDatabasePath();
-      
+
       // Показываем диалог подтверждения
       final confirmed = await showDatabaseResetDialog(context, dbPath);
-      
+
       if (!confirmed) {
         return; // Пользователь отменил действие
       }
@@ -109,9 +109,8 @@ class _MainShellState extends State<MainShell> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
         );
       }
 
@@ -206,15 +205,42 @@ class _MainShellState extends State<MainShell> {
                   ],
                 ),
               ),
+              // Кнопка проверки целостности БД
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () => context.go('/integrity-check'),
+                  icon: const Icon(
+                    Icons.health_and_safety,
+                    color: Colors.orange,
+                  ),
+                  label: const Text(
+                    'Проверка БД',
+                    style: TextStyle(color: Colors.orange),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                    side: const BorderSide(color: Colors.orange),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    minimumSize: const Size(120, 40),
+                  ),
+                ),
+              ),
               // Кнопка сброса базы данных
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
                 child: ElevatedButton.icon(
                   onPressed: _resetDatabase,
-                  icon: const Icon(
-                    Icons.delete_forever,
-                    color: Colors.red,
-                  ),
+                  icon: const Icon(Icons.delete_forever, color: Colors.red),
                   label: const Text(
                     'Сбросить БД',
                     style: TextStyle(color: Colors.red),
@@ -222,11 +248,15 @@ class _MainShellState extends State<MainShell> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.withValues(alpha: 0.1),
                     side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     minimumSize: const Size(120, 40),
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),

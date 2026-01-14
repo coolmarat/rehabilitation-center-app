@@ -5,6 +5,8 @@ import 'package:rehabilitation_center_app/features/activity_types/domain/activit
     as domain_activity_type;
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart'
     as domain_child;
+import 'package:rehabilitation_center_app/features/clients/domain/parent.dart'
+    as domain_parent;
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart'
     as domain_employee;
 import 'package:rehabilitation_center_app/features/schedule/domain/entities/schedule_form_data.dart';
@@ -33,9 +35,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       isCompleted: Value(
         session.isCompleted,
       ), // Use Value() for field with default
-      isPaid: Value(
-        session.isPaid,
-      ), // Use Value() for payment field
+      isPaid: Value(session.isPaid), // Use Value() for payment field
       notes:
           session.notes == null
               ? const Value.absent()
@@ -50,11 +50,13 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     final employeesFuture = _database.select(_database.employees).get();
     final activityTypesFuture = _database.select(_database.activityTypes).get();
     final childrenFuture = _database.select(_database.children).get();
+    final parentsFuture = _database.select(_database.parents).get();
 
     final results = await Future.wait([
       employeesFuture,
       activityTypesFuture,
       childrenFuture,
+      parentsFuture,
     ]);
 
     // Преобразуем данные Drift в доменные модели
@@ -99,10 +101,26 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
             )
             .toList();
 
+    // Преобразуем данные родителей
+    final parents =
+        (results[3] as List<db.ParentEntry>)
+            .map(
+              (p) => domain_parent.Parent(
+                id: p.id,
+                fullName: p.fullName,
+                phoneNumber: p.phoneNumber,
+                email: p.email,
+                address: p.address,
+                balance: p.balance,
+              ),
+            )
+            .toList();
+
     return ScheduleFormData(
       employees: employees,
       activityTypes: activityTypes,
       children: children,
+      parents: parents,
     );
   }
 
@@ -111,7 +129,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     // Напрямую вызываем метод из DAO, так как репозиторий имеет доступ к базе данных
     return await _database.paymentDao.getClientSessionBalance(clientId);
   }
-  
+
   @override
   Future<int> getParentSessionBalance(int parentId) async {
     // Используем новый метод из DAO для получения баланса родителя

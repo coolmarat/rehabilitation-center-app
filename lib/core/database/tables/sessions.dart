@@ -3,11 +3,15 @@ part of '../app_database.dart';
 @DataClassName('Session')
 class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get childId => integer().customConstraint('REFERENCES children(id)')();
+  // Каскадное удаление при удалении ребенка
+  IntColumn get childId =>
+      integer().references(Children, #id, onDelete: KeyAction.cascade)();
+  // Каскадное удаление при удалении сотрудника
   IntColumn get employeeId =>
-      integer().customConstraint('REFERENCES employees(id)')();
+      integer().references(Employees, #id, onDelete: KeyAction.cascade)();
+  // Каскадное удаление при удалении типа занятия
   IntColumn get activityTypeId =>
-      integer().customConstraint('REFERENCES activity_types(id)')();
+      integer().references(ActivityTypes, #id, onDelete: KeyAction.cascade)();
   DateTimeColumn get sessionDateTime => dateTime()();
   TextColumn get notes => text().nullable()();
   RealColumn get price => real()();
@@ -16,7 +20,5 @@ class Sessions extends Table {
 
   // Новые поля для учета оплат
   BoolColumn get isPaid => boolean().withDefault(const Constant(false))();
-  IntColumn get paymentId =>
-      integer().nullable().customConstraint('NULLABLE REFERENCES payments(id)')();
+  IntColumn get paymentId => integer().nullable().references(Payments, #id)();
 }
-

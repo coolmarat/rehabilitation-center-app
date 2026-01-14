@@ -3,8 +3,9 @@ part of '../app_database.dart';
 @DataClassName('Payment')
 class Payments extends Table {
   IntColumn get id => integer().autoIncrement()();
+  // Ссылка на родителя с каскадным удалением
   IntColumn get clientId =>
-      integer().customConstraint('REFERENCES children(id)')();
+      integer().references(Parents, #id, onDelete: KeyAction.cascade)();
   DateTimeColumn get paymentDate => dateTime()();
   RealColumn get amount => real()();
 

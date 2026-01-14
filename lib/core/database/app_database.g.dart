@@ -1419,6 +1419,485 @@ class ActivityTypesCompanion extends UpdateCompanion<ActivityTypeEntry> {
   }
 }
 
+class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PaymentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _clientIdMeta = const VerificationMeta(
+    'clientId',
+  );
+  @override
+  late final GeneratedColumn<int> clientId = GeneratedColumn<int>(
+    'client_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES parents (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _paymentDateMeta = const VerificationMeta(
+    'paymentDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> paymentDate = GeneratedColumn<DateTime>(
+    'payment_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionCountMeta = const VerificationMeta(
+    'sessionCount',
+  );
+  @override
+  late final GeneratedColumn<int> sessionCount = GeneratedColumn<int>(
+    'session_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usedSessionsMeta = const VerificationMeta(
+    'usedSessions',
+  );
+  @override
+  late final GeneratedColumn<int> usedSessions = GeneratedColumn<int>(
+    'used_sessions',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    clientId,
+    paymentDate,
+    amount,
+    type,
+    sessionCount,
+    usedSessions,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'payments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Payment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('client_id')) {
+      context.handle(
+        _clientIdMeta,
+        clientId.isAcceptableOrUnknown(data['client_id']!, _clientIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_clientIdMeta);
+    }
+    if (data.containsKey('payment_date')) {
+      context.handle(
+        _paymentDateMeta,
+        paymentDate.isAcceptableOrUnknown(
+          data['payment_date']!,
+          _paymentDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_paymentDateMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('session_count')) {
+      context.handle(
+        _sessionCountMeta,
+        sessionCount.isAcceptableOrUnknown(
+          data['session_count']!,
+          _sessionCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionCountMeta);
+    }
+    if (data.containsKey('used_sessions')) {
+      context.handle(
+        _usedSessionsMeta,
+        usedSessions.isAcceptableOrUnknown(
+          data['used_sessions']!,
+          _usedSessionsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Payment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Payment(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      clientId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}client_id'],
+          )!,
+      paymentDate:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}payment_date'],
+          )!,
+      amount:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}amount'],
+          )!,
+      type:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}type'],
+          )!,
+      sessionCount:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}session_count'],
+          )!,
+      usedSessions:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}used_sessions'],
+          )!,
+    );
+  }
+
+  @override
+  $PaymentsTable createAlias(String alias) {
+    return $PaymentsTable(attachedDatabase, alias);
+  }
+}
+
+class Payment extends DataClass implements Insertable<Payment> {
+  final int id;
+  final int clientId;
+  final DateTime paymentDate;
+  final double amount;
+
+  /// Тип платежа: 'single' для разового, 'subscription' для абонемента.
+  final String type;
+
+  /// Количество занятий в абонементе (для разовых будет 1).
+  final int sessionCount;
+
+  /// Количество уже использованных занятий из абонемента.
+  final int usedSessions;
+  const Payment({
+    required this.id,
+    required this.clientId,
+    required this.paymentDate,
+    required this.amount,
+    required this.type,
+    required this.sessionCount,
+    required this.usedSessions,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['client_id'] = Variable<int>(clientId);
+    map['payment_date'] = Variable<DateTime>(paymentDate);
+    map['amount'] = Variable<double>(amount);
+    map['type'] = Variable<String>(type);
+    map['session_count'] = Variable<int>(sessionCount);
+    map['used_sessions'] = Variable<int>(usedSessions);
+    return map;
+  }
+
+  PaymentsCompanion toCompanion(bool nullToAbsent) {
+    return PaymentsCompanion(
+      id: Value(id),
+      clientId: Value(clientId),
+      paymentDate: Value(paymentDate),
+      amount: Value(amount),
+      type: Value(type),
+      sessionCount: Value(sessionCount),
+      usedSessions: Value(usedSessions),
+    );
+  }
+
+  factory Payment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Payment(
+      id: serializer.fromJson<int>(json['id']),
+      clientId: serializer.fromJson<int>(json['clientId']),
+      paymentDate: serializer.fromJson<DateTime>(json['paymentDate']),
+      amount: serializer.fromJson<double>(json['amount']),
+      type: serializer.fromJson<String>(json['type']),
+      sessionCount: serializer.fromJson<int>(json['sessionCount']),
+      usedSessions: serializer.fromJson<int>(json['usedSessions']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'clientId': serializer.toJson<int>(clientId),
+      'paymentDate': serializer.toJson<DateTime>(paymentDate),
+      'amount': serializer.toJson<double>(amount),
+      'type': serializer.toJson<String>(type),
+      'sessionCount': serializer.toJson<int>(sessionCount),
+      'usedSessions': serializer.toJson<int>(usedSessions),
+    };
+  }
+
+  Payment copyWith({
+    int? id,
+    int? clientId,
+    DateTime? paymentDate,
+    double? amount,
+    String? type,
+    int? sessionCount,
+    int? usedSessions,
+  }) => Payment(
+    id: id ?? this.id,
+    clientId: clientId ?? this.clientId,
+    paymentDate: paymentDate ?? this.paymentDate,
+    amount: amount ?? this.amount,
+    type: type ?? this.type,
+    sessionCount: sessionCount ?? this.sessionCount,
+    usedSessions: usedSessions ?? this.usedSessions,
+  );
+  Payment copyWithCompanion(PaymentsCompanion data) {
+    return Payment(
+      id: data.id.present ? data.id.value : this.id,
+      clientId: data.clientId.present ? data.clientId.value : this.clientId,
+      paymentDate:
+          data.paymentDate.present ? data.paymentDate.value : this.paymentDate,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      type: data.type.present ? data.type.value : this.type,
+      sessionCount:
+          data.sessionCount.present
+              ? data.sessionCount.value
+              : this.sessionCount,
+      usedSessions:
+          data.usedSessions.present
+              ? data.usedSessions.value
+              : this.usedSessions,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Payment(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('paymentDate: $paymentDate, ')
+          ..write('amount: $amount, ')
+          ..write('type: $type, ')
+          ..write('sessionCount: $sessionCount, ')
+          ..write('usedSessions: $usedSessions')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    clientId,
+    paymentDate,
+    amount,
+    type,
+    sessionCount,
+    usedSessions,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Payment &&
+          other.id == this.id &&
+          other.clientId == this.clientId &&
+          other.paymentDate == this.paymentDate &&
+          other.amount == this.amount &&
+          other.type == this.type &&
+          other.sessionCount == this.sessionCount &&
+          other.usedSessions == this.usedSessions);
+}
+
+class PaymentsCompanion extends UpdateCompanion<Payment> {
+  final Value<int> id;
+  final Value<int> clientId;
+  final Value<DateTime> paymentDate;
+  final Value<double> amount;
+  final Value<String> type;
+  final Value<int> sessionCount;
+  final Value<int> usedSessions;
+  const PaymentsCompanion({
+    this.id = const Value.absent(),
+    this.clientId = const Value.absent(),
+    this.paymentDate = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.type = const Value.absent(),
+    this.sessionCount = const Value.absent(),
+    this.usedSessions = const Value.absent(),
+  });
+  PaymentsCompanion.insert({
+    this.id = const Value.absent(),
+    required int clientId,
+    required DateTime paymentDate,
+    required double amount,
+    required String type,
+    required int sessionCount,
+    this.usedSessions = const Value.absent(),
+  }) : clientId = Value(clientId),
+       paymentDate = Value(paymentDate),
+       amount = Value(amount),
+       type = Value(type),
+       sessionCount = Value(sessionCount);
+  static Insertable<Payment> custom({
+    Expression<int>? id,
+    Expression<int>? clientId,
+    Expression<DateTime>? paymentDate,
+    Expression<double>? amount,
+    Expression<String>? type,
+    Expression<int>? sessionCount,
+    Expression<int>? usedSessions,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (clientId != null) 'client_id': clientId,
+      if (paymentDate != null) 'payment_date': paymentDate,
+      if (amount != null) 'amount': amount,
+      if (type != null) 'type': type,
+      if (sessionCount != null) 'session_count': sessionCount,
+      if (usedSessions != null) 'used_sessions': usedSessions,
+    });
+  }
+
+  PaymentsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? clientId,
+    Value<DateTime>? paymentDate,
+    Value<double>? amount,
+    Value<String>? type,
+    Value<int>? sessionCount,
+    Value<int>? usedSessions,
+  }) {
+    return PaymentsCompanion(
+      id: id ?? this.id,
+      clientId: clientId ?? this.clientId,
+      paymentDate: paymentDate ?? this.paymentDate,
+      amount: amount ?? this.amount,
+      type: type ?? this.type,
+      sessionCount: sessionCount ?? this.sessionCount,
+      usedSessions: usedSessions ?? this.usedSessions,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (clientId.present) {
+      map['client_id'] = Variable<int>(clientId.value);
+    }
+    if (paymentDate.present) {
+      map['payment_date'] = Variable<DateTime>(paymentDate.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (sessionCount.present) {
+      map['session_count'] = Variable<int>(sessionCount.value);
+    }
+    if (usedSessions.present) {
+      map['used_sessions'] = Variable<int>(usedSessions.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PaymentsCompanion(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('paymentDate: $paymentDate, ')
+          ..write('amount: $amount, ')
+          ..write('type: $type, ')
+          ..write('sessionCount: $sessionCount, ')
+          ..write('usedSessions: $usedSessions')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SessionsTable extends Sessions with TableInfo<$SessionsTable, Session> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1447,7 +1926,9 @@ class $SessionsTable extends Sessions with TableInfo<$SessionsTable, Session> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
-    $customConstraints: 'REFERENCES children(id)',
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES children (id) ON DELETE CASCADE',
+    ),
   );
   static const VerificationMeta _employeeIdMeta = const VerificationMeta(
     'employeeId',
@@ -1459,7 +1940,9 @@ class $SessionsTable extends Sessions with TableInfo<$SessionsTable, Session> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
-    $customConstraints: 'REFERENCES employees(id)',
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES employees (id) ON DELETE CASCADE',
+    ),
   );
   static const VerificationMeta _activityTypeIdMeta = const VerificationMeta(
     'activityTypeId',
@@ -1471,7 +1954,9 @@ class $SessionsTable extends Sessions with TableInfo<$SessionsTable, Session> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
-    $customConstraints: 'REFERENCES activity_types(id)',
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES activity_types (id) ON DELETE CASCADE',
+    ),
   );
   static const VerificationMeta _sessionDateTimeMeta = const VerificationMeta(
     'sessionDateTime',
@@ -1553,7 +2038,9 @@ class $SessionsTable extends Sessions with TableInfo<$SessionsTable, Session> {
     true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    $customConstraints: 'NULLABLE REFERENCES payments(id)',
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES payments (id)',
+    ),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -2097,483 +2584,6 @@ class SessionsCompanion extends UpdateCompanion<Session> {
   }
 }
 
-class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $PaymentsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _clientIdMeta = const VerificationMeta(
-    'clientId',
-  );
-  @override
-  late final GeneratedColumn<int> clientId = GeneratedColumn<int>(
-    'client_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    $customConstraints: 'REFERENCES children(id)',
-  );
-  static const VerificationMeta _paymentDateMeta = const VerificationMeta(
-    'paymentDate',
-  );
-  @override
-  late final GeneratedColumn<DateTime> paymentDate = GeneratedColumn<DateTime>(
-    'payment_date',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
-    'amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _typeMeta = const VerificationMeta('type');
-  @override
-  late final GeneratedColumn<String> type = GeneratedColumn<String>(
-    'type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _sessionCountMeta = const VerificationMeta(
-    'sessionCount',
-  );
-  @override
-  late final GeneratedColumn<int> sessionCount = GeneratedColumn<int>(
-    'session_count',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _usedSessionsMeta = const VerificationMeta(
-    'usedSessions',
-  );
-  @override
-  late final GeneratedColumn<int> usedSessions = GeneratedColumn<int>(
-    'used_sessions',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    clientId,
-    paymentDate,
-    amount,
-    type,
-    sessionCount,
-    usedSessions,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'payments';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Payment> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('client_id')) {
-      context.handle(
-        _clientIdMeta,
-        clientId.isAcceptableOrUnknown(data['client_id']!, _clientIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_clientIdMeta);
-    }
-    if (data.containsKey('payment_date')) {
-      context.handle(
-        _paymentDateMeta,
-        paymentDate.isAcceptableOrUnknown(
-          data['payment_date']!,
-          _paymentDateMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_paymentDateMeta);
-    }
-    if (data.containsKey('amount')) {
-      context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
-    }
-    if (data.containsKey('type')) {
-      context.handle(
-        _typeMeta,
-        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_typeMeta);
-    }
-    if (data.containsKey('session_count')) {
-      context.handle(
-        _sessionCountMeta,
-        sessionCount.isAcceptableOrUnknown(
-          data['session_count']!,
-          _sessionCountMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_sessionCountMeta);
-    }
-    if (data.containsKey('used_sessions')) {
-      context.handle(
-        _usedSessionsMeta,
-        usedSessions.isAcceptableOrUnknown(
-          data['used_sessions']!,
-          _usedSessionsMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Payment map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Payment(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      clientId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}client_id'],
-          )!,
-      paymentDate:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}payment_date'],
-          )!,
-      amount:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}amount'],
-          )!,
-      type:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}type'],
-          )!,
-      sessionCount:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}session_count'],
-          )!,
-      usedSessions:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}used_sessions'],
-          )!,
-    );
-  }
-
-  @override
-  $PaymentsTable createAlias(String alias) {
-    return $PaymentsTable(attachedDatabase, alias);
-  }
-}
-
-class Payment extends DataClass implements Insertable<Payment> {
-  final int id;
-  final int clientId;
-  final DateTime paymentDate;
-  final double amount;
-
-  /// Тип платежа: 'single' для разового, 'subscription' для абонемента.
-  final String type;
-
-  /// Количество занятий в абонементе (для разовых будет 1).
-  final int sessionCount;
-
-  /// Количество уже использованных занятий из абонемента.
-  final int usedSessions;
-  const Payment({
-    required this.id,
-    required this.clientId,
-    required this.paymentDate,
-    required this.amount,
-    required this.type,
-    required this.sessionCount,
-    required this.usedSessions,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['client_id'] = Variable<int>(clientId);
-    map['payment_date'] = Variable<DateTime>(paymentDate);
-    map['amount'] = Variable<double>(amount);
-    map['type'] = Variable<String>(type);
-    map['session_count'] = Variable<int>(sessionCount);
-    map['used_sessions'] = Variable<int>(usedSessions);
-    return map;
-  }
-
-  PaymentsCompanion toCompanion(bool nullToAbsent) {
-    return PaymentsCompanion(
-      id: Value(id),
-      clientId: Value(clientId),
-      paymentDate: Value(paymentDate),
-      amount: Value(amount),
-      type: Value(type),
-      sessionCount: Value(sessionCount),
-      usedSessions: Value(usedSessions),
-    );
-  }
-
-  factory Payment.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Payment(
-      id: serializer.fromJson<int>(json['id']),
-      clientId: serializer.fromJson<int>(json['clientId']),
-      paymentDate: serializer.fromJson<DateTime>(json['paymentDate']),
-      amount: serializer.fromJson<double>(json['amount']),
-      type: serializer.fromJson<String>(json['type']),
-      sessionCount: serializer.fromJson<int>(json['sessionCount']),
-      usedSessions: serializer.fromJson<int>(json['usedSessions']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'clientId': serializer.toJson<int>(clientId),
-      'paymentDate': serializer.toJson<DateTime>(paymentDate),
-      'amount': serializer.toJson<double>(amount),
-      'type': serializer.toJson<String>(type),
-      'sessionCount': serializer.toJson<int>(sessionCount),
-      'usedSessions': serializer.toJson<int>(usedSessions),
-    };
-  }
-
-  Payment copyWith({
-    int? id,
-    int? clientId,
-    DateTime? paymentDate,
-    double? amount,
-    String? type,
-    int? sessionCount,
-    int? usedSessions,
-  }) => Payment(
-    id: id ?? this.id,
-    clientId: clientId ?? this.clientId,
-    paymentDate: paymentDate ?? this.paymentDate,
-    amount: amount ?? this.amount,
-    type: type ?? this.type,
-    sessionCount: sessionCount ?? this.sessionCount,
-    usedSessions: usedSessions ?? this.usedSessions,
-  );
-  Payment copyWithCompanion(PaymentsCompanion data) {
-    return Payment(
-      id: data.id.present ? data.id.value : this.id,
-      clientId: data.clientId.present ? data.clientId.value : this.clientId,
-      paymentDate:
-          data.paymentDate.present ? data.paymentDate.value : this.paymentDate,
-      amount: data.amount.present ? data.amount.value : this.amount,
-      type: data.type.present ? data.type.value : this.type,
-      sessionCount:
-          data.sessionCount.present
-              ? data.sessionCount.value
-              : this.sessionCount,
-      usedSessions:
-          data.usedSessions.present
-              ? data.usedSessions.value
-              : this.usedSessions,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Payment(')
-          ..write('id: $id, ')
-          ..write('clientId: $clientId, ')
-          ..write('paymentDate: $paymentDate, ')
-          ..write('amount: $amount, ')
-          ..write('type: $type, ')
-          ..write('sessionCount: $sessionCount, ')
-          ..write('usedSessions: $usedSessions')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    clientId,
-    paymentDate,
-    amount,
-    type,
-    sessionCount,
-    usedSessions,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Payment &&
-          other.id == this.id &&
-          other.clientId == this.clientId &&
-          other.paymentDate == this.paymentDate &&
-          other.amount == this.amount &&
-          other.type == this.type &&
-          other.sessionCount == this.sessionCount &&
-          other.usedSessions == this.usedSessions);
-}
-
-class PaymentsCompanion extends UpdateCompanion<Payment> {
-  final Value<int> id;
-  final Value<int> clientId;
-  final Value<DateTime> paymentDate;
-  final Value<double> amount;
-  final Value<String> type;
-  final Value<int> sessionCount;
-  final Value<int> usedSessions;
-  const PaymentsCompanion({
-    this.id = const Value.absent(),
-    this.clientId = const Value.absent(),
-    this.paymentDate = const Value.absent(),
-    this.amount = const Value.absent(),
-    this.type = const Value.absent(),
-    this.sessionCount = const Value.absent(),
-    this.usedSessions = const Value.absent(),
-  });
-  PaymentsCompanion.insert({
-    this.id = const Value.absent(),
-    required int clientId,
-    required DateTime paymentDate,
-    required double amount,
-    required String type,
-    required int sessionCount,
-    this.usedSessions = const Value.absent(),
-  }) : clientId = Value(clientId),
-       paymentDate = Value(paymentDate),
-       amount = Value(amount),
-       type = Value(type),
-       sessionCount = Value(sessionCount);
-  static Insertable<Payment> custom({
-    Expression<int>? id,
-    Expression<int>? clientId,
-    Expression<DateTime>? paymentDate,
-    Expression<double>? amount,
-    Expression<String>? type,
-    Expression<int>? sessionCount,
-    Expression<int>? usedSessions,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (clientId != null) 'client_id': clientId,
-      if (paymentDate != null) 'payment_date': paymentDate,
-      if (amount != null) 'amount': amount,
-      if (type != null) 'type': type,
-      if (sessionCount != null) 'session_count': sessionCount,
-      if (usedSessions != null) 'used_sessions': usedSessions,
-    });
-  }
-
-  PaymentsCompanion copyWith({
-    Value<int>? id,
-    Value<int>? clientId,
-    Value<DateTime>? paymentDate,
-    Value<double>? amount,
-    Value<String>? type,
-    Value<int>? sessionCount,
-    Value<int>? usedSessions,
-  }) {
-    return PaymentsCompanion(
-      id: id ?? this.id,
-      clientId: clientId ?? this.clientId,
-      paymentDate: paymentDate ?? this.paymentDate,
-      amount: amount ?? this.amount,
-      type: type ?? this.type,
-      sessionCount: sessionCount ?? this.sessionCount,
-      usedSessions: usedSessions ?? this.usedSessions,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (clientId.present) {
-      map['client_id'] = Variable<int>(clientId.value);
-    }
-    if (paymentDate.present) {
-      map['payment_date'] = Variable<DateTime>(paymentDate.value);
-    }
-    if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
-    }
-    if (type.present) {
-      map['type'] = Variable<String>(type.value);
-    }
-    if (sessionCount.present) {
-      map['session_count'] = Variable<int>(sessionCount.value);
-    }
-    if (usedSessions.present) {
-      map['used_sessions'] = Variable<int>(usedSessions.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PaymentsCompanion(')
-          ..write('id: $id, ')
-          ..write('clientId: $clientId, ')
-          ..write('paymentDate: $paymentDate, ')
-          ..write('amount: $amount, ')
-          ..write('type: $type, ')
-          ..write('sessionCount: $sessionCount, ')
-          ..write('usedSessions: $usedSessions')
-          ..write(')'))
-        .toString();
-  }
-}
-
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2581,8 +2591,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ChildrenTable children = $ChildrenTable(this);
   late final $EmployeesTable employees = $EmployeesTable(this);
   late final $ActivityTypesTable activityTypes = $ActivityTypesTable(this);
-  late final $SessionsTable sessions = $SessionsTable(this);
   late final $PaymentsTable payments = $PaymentsTable(this);
+  late final $SessionsTable sessions = $SessionsTable(this);
   late final ScheduleDao scheduleDao = ScheduleDao(this as AppDatabase);
   late final ClientDao clientDao = ClientDao(this as AppDatabase);
   late final PaymentDao paymentDao = PaymentDao(this as AppDatabase);
@@ -2595,8 +2605,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     children,
     employees,
     activityTypes,
-    sessions,
     payments,
+    sessions,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -2606,6 +2616,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('children', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'parents',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('payments', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'children',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('sessions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'employees',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('sessions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'activity_types',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('sessions', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2646,6 +2684,25 @@ final class $$ParentsTableReferences
     ).filter((f) => f.parentId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_childrenRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$PaymentsTable, List<Payment>> _paymentsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.payments,
+    aliasName: $_aliasNameGenerator(db.parents.id, db.payments.clientId),
+  );
+
+  $$PaymentsTableProcessedTableManager get paymentsRefs {
+    final manager = $$PaymentsTableTableManager(
+      $_db,
+      $_db.payments,
+    ).filter((f) => f.clientId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_paymentsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2707,6 +2764,31 @@ class $$ParentsTableFilterComposer
           }) => $$ChildrenTableFilterComposer(
             $db: $db,
             $table: $db.children,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> paymentsRefs(
+    Expression<bool> Function($$PaymentsTableFilterComposer f) f,
+  ) {
+    final $$PaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.clientId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.payments,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2810,6 +2892,31 @@ class $$ParentsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> paymentsRefs<T extends Object>(
+    Expression<T> Function($$PaymentsTableAnnotationComposer a) f,
+  ) {
+    final $$PaymentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.clientId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ParentsTableTableManager
@@ -2825,7 +2932,7 @@ class $$ParentsTableTableManager
           $$ParentsTableUpdateCompanionBuilder,
           (ParentEntry, $$ParentsTableReferences),
           ParentEntry,
-          PrefetchHooks Function({bool childrenRefs})
+          PrefetchHooks Function({bool childrenRefs, bool paymentsRefs})
         > {
   $$ParentsTableTableManager(_$AppDatabase db, $ParentsTable table)
     : super(
@@ -2880,10 +2987,16 @@ class $$ParentsTableTableManager
                         ),
                       )
                       .toList(),
-          prefetchHooksCallback: ({childrenRefs = false}) {
+          prefetchHooksCallback: ({
+            childrenRefs = false,
+            paymentsRefs = false,
+          }) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (childrenRefs) db.children],
+              explicitlyWatchedTables: [
+                if (childrenRefs) db.children,
+                if (paymentsRefs) db.payments,
+              ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
@@ -2909,6 +3022,28 @@ class $$ParentsTableTableManager
                           ),
                       typedResults: items,
                     ),
+                  if (paymentsRefs)
+                    await $_getPrefetchedData<
+                      ParentEntry,
+                      $ParentsTable,
+                      Payment
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ParentsTableReferences
+                          ._paymentsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
+                              $$ParentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).paymentsRefs,
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.clientId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
                 ];
               },
             );
@@ -2929,7 +3064,7 @@ typedef $$ParentsTableProcessedTableManager =
       $$ParentsTableUpdateCompanionBuilder,
       (ParentEntry, $$ParentsTableReferences),
       ParentEntry,
-      PrefetchHooks Function({bool childrenRefs})
+      PrefetchHooks Function({bool childrenRefs, bool paymentsRefs})
     >;
 typedef $$ChildrenTableCreateCompanionBuilder =
     ChildrenCompanion Function({
@@ -2983,25 +3118,6 @@ final class $$ChildrenTableReferences
     ).filter((f) => f.childId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_sessionsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$PaymentsTable, List<Payment>> _paymentsRefsTable(
-    _$AppDatabase db,
-  ) => MultiTypedResultKey.fromTable(
-    db.payments,
-    aliasName: $_aliasNameGenerator(db.children.id, db.payments.clientId),
-  );
-
-  $$PaymentsTableProcessedTableManager get paymentsRefs {
-    final manager = $$PaymentsTableTableManager(
-      $_db,
-      $_db.payments,
-    ).filter((f) => f.clientId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_paymentsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3076,31 +3192,6 @@ class $$ChildrenTableFilterComposer
           }) => $$SessionsTableFilterComposer(
             $db: $db,
             $table: $db.sessions,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> paymentsRefs(
-    Expression<bool> Function($$PaymentsTableFilterComposer f) f,
-  ) {
-    final $$PaymentsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.payments,
-      getReferencedColumn: (t) => t.clientId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PaymentsTableFilterComposer(
-            $db: $db,
-            $table: $db.payments,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3234,31 +3325,6 @@ class $$ChildrenTableAnnotationComposer
     );
     return f(composer);
   }
-
-  Expression<T> paymentsRefs<T extends Object>(
-    Expression<T> Function($$PaymentsTableAnnotationComposer a) f,
-  ) {
-    final $$PaymentsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.payments,
-      getReferencedColumn: (t) => t.clientId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PaymentsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.payments,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$ChildrenTableTableManager
@@ -3274,11 +3340,7 @@ class $$ChildrenTableTableManager
           $$ChildrenTableUpdateCompanionBuilder,
           (ChildEntry, $$ChildrenTableReferences),
           ChildEntry,
-          PrefetchHooks Function({
-            bool parentId,
-            bool sessionsRefs,
-            bool paymentsRefs,
-          })
+          PrefetchHooks Function({bool parentId, bool sessionsRefs})
         > {
   $$ChildrenTableTableManager(_$AppDatabase db, $ChildrenTable table)
     : super(
@@ -3329,17 +3391,10 @@ class $$ChildrenTableTableManager
                         ),
                       )
                       .toList(),
-          prefetchHooksCallback: ({
-            parentId = false,
-            sessionsRefs = false,
-            paymentsRefs = false,
-          }) {
+          prefetchHooksCallback: ({parentId = false, sessionsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [
-                if (sessionsRefs) db.sessions,
-                if (paymentsRefs) db.payments,
-              ],
+              explicitlyWatchedTables: [if (sessionsRefs) db.sessions],
               addJoins: <
                 T extends TableManagerState<
                   dynamic,
@@ -3394,28 +3449,6 @@ class $$ChildrenTableTableManager
                           ),
                       typedResults: items,
                     ),
-                  if (paymentsRefs)
-                    await $_getPrefetchedData<
-                      ChildEntry,
-                      $ChildrenTable,
-                      Payment
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ChildrenTableReferences
-                          ._paymentsRefsTable(db),
-                      managerFromTypedResult:
-                          (p0) =>
-                              $$ChildrenTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).paymentsRefs,
-                      referencedItemsForCurrentItem:
-                          (item, referencedItems) => referencedItems.where(
-                            (e) => e.clientId == item.id,
-                          ),
-                      typedResults: items,
-                    ),
                 ];
               },
             );
@@ -3436,11 +3469,7 @@ typedef $$ChildrenTableProcessedTableManager =
       $$ChildrenTableUpdateCompanionBuilder,
       (ChildEntry, $$ChildrenTableReferences),
       ChildEntry,
-      PrefetchHooks Function({
-        bool parentId,
-        bool sessionsRefs,
-        bool paymentsRefs,
-      })
+      PrefetchHooks Function({bool parentId, bool sessionsRefs})
     >;
 typedef $$EmployeesTableCreateCompanionBuilder =
     EmployeesCompanion Function({
@@ -4024,6 +4053,449 @@ typedef $$ActivityTypesTableProcessedTableManager =
       ActivityTypeEntry,
       PrefetchHooks Function({bool sessionsRefs})
     >;
+typedef $$PaymentsTableCreateCompanionBuilder =
+    PaymentsCompanion Function({
+      Value<int> id,
+      required int clientId,
+      required DateTime paymentDate,
+      required double amount,
+      required String type,
+      required int sessionCount,
+      Value<int> usedSessions,
+    });
+typedef $$PaymentsTableUpdateCompanionBuilder =
+    PaymentsCompanion Function({
+      Value<int> id,
+      Value<int> clientId,
+      Value<DateTime> paymentDate,
+      Value<double> amount,
+      Value<String> type,
+      Value<int> sessionCount,
+      Value<int> usedSessions,
+    });
+
+final class $$PaymentsTableReferences
+    extends BaseReferences<_$AppDatabase, $PaymentsTable, Payment> {
+  $$PaymentsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ParentsTable _clientIdTable(_$AppDatabase db) => db.parents
+      .createAlias($_aliasNameGenerator(db.payments.clientId, db.parents.id));
+
+  $$ParentsTableProcessedTableManager get clientId {
+    final $_column = $_itemColumn<int>('client_id')!;
+
+    final manager = $$ParentsTableTableManager(
+      $_db,
+      $_db.parents,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_clientIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$SessionsTable, List<Session>> _sessionsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.sessions,
+    aliasName: $_aliasNameGenerator(db.payments.id, db.sessions.paymentId),
+  );
+
+  $$SessionsTableProcessedTableManager get sessionsRefs {
+    final manager = $$SessionsTableTableManager(
+      $_db,
+      $_db.sessions,
+    ).filter((f) => f.paymentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_sessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$PaymentsTableFilterComposer
+    extends Composer<_$AppDatabase, $PaymentsTable> {
+  $$PaymentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get usedSessions => $composableBuilder(
+    column: $table.usedSessions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ParentsTableFilterComposer get clientId {
+    final $$ParentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.clientId,
+      referencedTable: $db.parents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParentsTableFilterComposer(
+            $db: $db,
+            $table: $db.parents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> sessionsRefs(
+    Expression<bool> Function($$SessionsTableFilterComposer f) f,
+  ) {
+    final $$SessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.paymentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PaymentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PaymentsTable> {
+  $$PaymentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get usedSessions => $composableBuilder(
+    column: $table.usedSessions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ParentsTableOrderingComposer get clientId {
+    final $$ParentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.clientId,
+      referencedTable: $db.parents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.parents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PaymentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PaymentsTable> {
+  $$PaymentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get usedSessions => $composableBuilder(
+    column: $table.usedSessions,
+    builder: (column) => column,
+  );
+
+  $$ParentsTableAnnotationComposer get clientId {
+    final $$ParentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.clientId,
+      referencedTable: $db.parents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.parents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> sessionsRefs<T extends Object>(
+    Expression<T> Function($$SessionsTableAnnotationComposer a) f,
+  ) {
+    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessions,
+      getReferencedColumn: (t) => t.paymentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PaymentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PaymentsTable,
+          Payment,
+          $$PaymentsTableFilterComposer,
+          $$PaymentsTableOrderingComposer,
+          $$PaymentsTableAnnotationComposer,
+          $$PaymentsTableCreateCompanionBuilder,
+          $$PaymentsTableUpdateCompanionBuilder,
+          (Payment, $$PaymentsTableReferences),
+          Payment,
+          PrefetchHooks Function({bool clientId, bool sessionsRefs})
+        > {
+  $$PaymentsTableTableManager(_$AppDatabase db, $PaymentsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$PaymentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$PaymentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$PaymentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> clientId = const Value.absent(),
+                Value<DateTime> paymentDate = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<int> sessionCount = const Value.absent(),
+                Value<int> usedSessions = const Value.absent(),
+              }) => PaymentsCompanion(
+                id: id,
+                clientId: clientId,
+                paymentDate: paymentDate,
+                amount: amount,
+                type: type,
+                sessionCount: sessionCount,
+                usedSessions: usedSessions,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int clientId,
+                required DateTime paymentDate,
+                required double amount,
+                required String type,
+                required int sessionCount,
+                Value<int> usedSessions = const Value.absent(),
+              }) => PaymentsCompanion.insert(
+                id: id,
+                clientId: clientId,
+                paymentDate: paymentDate,
+                amount: amount,
+                type: type,
+                sessionCount: sessionCount,
+                usedSessions: usedSessions,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$PaymentsTableReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: ({clientId = false, sessionsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (sessionsRefs) db.sessions],
+              addJoins: <
+                T extends TableManagerState<
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic
+                >
+              >(state) {
+                if (clientId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.clientId,
+                            referencedTable: $$PaymentsTableReferences
+                                ._clientIdTable(db),
+                            referencedColumn:
+                                $$PaymentsTableReferences._clientIdTable(db).id,
+                          )
+                          as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (sessionsRefs)
+                    await $_getPrefetchedData<Payment, $PaymentsTable, Session>(
+                      currentTable: table,
+                      referencedTable: $$PaymentsTableReferences
+                          ._sessionsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
+                              $$PaymentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).sessionsRefs,
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.paymentId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PaymentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PaymentsTable,
+      Payment,
+      $$PaymentsTableFilterComposer,
+      $$PaymentsTableOrderingComposer,
+      $$PaymentsTableAnnotationComposer,
+      $$PaymentsTableCreateCompanionBuilder,
+      $$PaymentsTableUpdateCompanionBuilder,
+      (Payment, $$PaymentsTableReferences),
+      Payment,
+      PrefetchHooks Function({bool clientId, bool sessionsRefs})
+    >;
 typedef $$SessionsTableCreateCompanionBuilder =
     SessionsCompanion Function({
       Value<int> id,
@@ -4111,6 +4583,23 @@ final class $$SessionsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static $PaymentsTable _paymentIdTable(_$AppDatabase db) => db.payments
+      .createAlias($_aliasNameGenerator(db.sessions.paymentId, db.payments.id));
+
+  $$PaymentsTableProcessedTableManager? get paymentId {
+    final $_column = $_itemColumn<int>('payment_id');
+    if ($_column == null) return null;
+    final manager = $$PaymentsTableTableManager(
+      $_db,
+      $_db.payments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_paymentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 }
 
 class $$SessionsTableFilterComposer
@@ -4154,11 +4643,6 @@ class $$SessionsTableFilterComposer
 
   ColumnFilters<bool> get isPaid => $composableBuilder(
     column: $table.isPaid,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get paymentId => $composableBuilder(
-    column: $table.paymentId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4230,6 +4714,29 @@ class $$SessionsTableFilterComposer
     );
     return composer;
   }
+
+  $$PaymentsTableFilterComposer get paymentId {
+    final $$PaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.paymentId,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$SessionsTableOrderingComposer
@@ -4273,11 +4780,6 @@ class $$SessionsTableOrderingComposer
 
   ColumnOrderings<bool> get isPaid => $composableBuilder(
     column: $table.isPaid,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get paymentId => $composableBuilder(
-    column: $table.paymentId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4349,6 +4851,29 @@ class $$SessionsTableOrderingComposer
     );
     return composer;
   }
+
+  $$PaymentsTableOrderingComposer get paymentId {
+    final $$PaymentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.paymentId,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$SessionsTableAnnotationComposer
@@ -4386,9 +4911,6 @@ class $$SessionsTableAnnotationComposer
 
   GeneratedColumn<bool> get isPaid =>
       $composableBuilder(column: $table.isPaid, builder: (column) => column);
-
-  GeneratedColumn<int> get paymentId =>
-      $composableBuilder(column: $table.paymentId, builder: (column) => column);
 
   $$ChildrenTableAnnotationComposer get childId {
     final $$ChildrenTableAnnotationComposer composer = $composerBuilder(
@@ -4458,6 +4980,29 @@ class $$SessionsTableAnnotationComposer
     );
     return composer;
   }
+
+  $$PaymentsTableAnnotationComposer get paymentId {
+    final $$PaymentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.paymentId,
+      referencedTable: $db.payments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaymentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$SessionsTableTableManager
@@ -4477,6 +5022,7 @@ class $$SessionsTableTableManager
             bool childId,
             bool employeeId,
             bool activityTypeId,
+            bool paymentId,
           })
         > {
   $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
@@ -4556,6 +5102,7 @@ class $$SessionsTableTableManager
             childId = false,
             employeeId = false,
             activityTypeId = false,
+            paymentId = false,
           }) {
             return PrefetchHooks(
               db: db,
@@ -4615,6 +5162,20 @@ class $$SessionsTableTableManager
                           )
                           as T;
                 }
+                if (paymentId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.paymentId,
+                            referencedTable: $$SessionsTableReferences
+                                ._paymentIdTable(db),
+                            referencedColumn:
+                                $$SessionsTableReferences
+                                    ._paymentIdTable(db)
+                                    .id,
+                          )
+                          as T;
+                }
 
                 return state;
               },
@@ -4643,362 +5204,8 @@ typedef $$SessionsTableProcessedTableManager =
         bool childId,
         bool employeeId,
         bool activityTypeId,
+        bool paymentId,
       })
-    >;
-typedef $$PaymentsTableCreateCompanionBuilder =
-    PaymentsCompanion Function({
-      Value<int> id,
-      required int clientId,
-      required DateTime paymentDate,
-      required double amount,
-      required String type,
-      required int sessionCount,
-      Value<int> usedSessions,
-    });
-typedef $$PaymentsTableUpdateCompanionBuilder =
-    PaymentsCompanion Function({
-      Value<int> id,
-      Value<int> clientId,
-      Value<DateTime> paymentDate,
-      Value<double> amount,
-      Value<String> type,
-      Value<int> sessionCount,
-      Value<int> usedSessions,
-    });
-
-final class $$PaymentsTableReferences
-    extends BaseReferences<_$AppDatabase, $PaymentsTable, Payment> {
-  $$PaymentsTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $ChildrenTable _clientIdTable(_$AppDatabase db) => db.children
-      .createAlias($_aliasNameGenerator(db.payments.clientId, db.children.id));
-
-  $$ChildrenTableProcessedTableManager get clientId {
-    final $_column = $_itemColumn<int>('client_id')!;
-
-    final manager = $$ChildrenTableTableManager(
-      $_db,
-      $_db.children,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_clientIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$PaymentsTableFilterComposer
-    extends Composer<_$AppDatabase, $PaymentsTable> {
-  $$PaymentsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get paymentDate => $composableBuilder(
-    column: $table.paymentDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get sessionCount => $composableBuilder(
-    column: $table.sessionCount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get usedSessions => $composableBuilder(
-    column: $table.usedSessions,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ChildrenTableFilterComposer get clientId {
-    final $$ChildrenTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.clientId,
-      referencedTable: $db.children,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ChildrenTableFilterComposer(
-            $db: $db,
-            $table: $db.children,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PaymentsTableOrderingComposer
-    extends Composer<_$AppDatabase, $PaymentsTable> {
-  $$PaymentsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get paymentDate => $composableBuilder(
-    column: $table.paymentDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get sessionCount => $composableBuilder(
-    column: $table.sessionCount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get usedSessions => $composableBuilder(
-    column: $table.usedSessions,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ChildrenTableOrderingComposer get clientId {
-    final $$ChildrenTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.clientId,
-      referencedTable: $db.children,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ChildrenTableOrderingComposer(
-            $db: $db,
-            $table: $db.children,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PaymentsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PaymentsTable> {
-  $$PaymentsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get paymentDate => $composableBuilder(
-    column: $table.paymentDate,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
-  GeneratedColumn<String> get type =>
-      $composableBuilder(column: $table.type, builder: (column) => column);
-
-  GeneratedColumn<int> get sessionCount => $composableBuilder(
-    column: $table.sessionCount,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get usedSessions => $composableBuilder(
-    column: $table.usedSessions,
-    builder: (column) => column,
-  );
-
-  $$ChildrenTableAnnotationComposer get clientId {
-    final $$ChildrenTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.clientId,
-      referencedTable: $db.children,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ChildrenTableAnnotationComposer(
-            $db: $db,
-            $table: $db.children,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PaymentsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $PaymentsTable,
-          Payment,
-          $$PaymentsTableFilterComposer,
-          $$PaymentsTableOrderingComposer,
-          $$PaymentsTableAnnotationComposer,
-          $$PaymentsTableCreateCompanionBuilder,
-          $$PaymentsTableUpdateCompanionBuilder,
-          (Payment, $$PaymentsTableReferences),
-          Payment,
-          PrefetchHooks Function({bool clientId})
-        > {
-  $$PaymentsTableTableManager(_$AppDatabase db, $PaymentsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer:
-              () => $$PaymentsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$PaymentsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$PaymentsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<int> clientId = const Value.absent(),
-                Value<DateTime> paymentDate = const Value.absent(),
-                Value<double> amount = const Value.absent(),
-                Value<String> type = const Value.absent(),
-                Value<int> sessionCount = const Value.absent(),
-                Value<int> usedSessions = const Value.absent(),
-              }) => PaymentsCompanion(
-                id: id,
-                clientId: clientId,
-                paymentDate: paymentDate,
-                amount: amount,
-                type: type,
-                sessionCount: sessionCount,
-                usedSessions: usedSessions,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required int clientId,
-                required DateTime paymentDate,
-                required double amount,
-                required String type,
-                required int sessionCount,
-                Value<int> usedSessions = const Value.absent(),
-              }) => PaymentsCompanion.insert(
-                id: id,
-                clientId: clientId,
-                paymentDate: paymentDate,
-                amount: amount,
-                type: type,
-                sessionCount: sessionCount,
-                usedSessions: usedSessions,
-              ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          $$PaymentsTableReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
-          prefetchHooksCallback: ({clientId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins: <
-                T extends TableManagerState<
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic,
-                  dynamic
-                >
-              >(state) {
-                if (clientId) {
-                  state =
-                      state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.clientId,
-                            referencedTable: $$PaymentsTableReferences
-                                ._clientIdTable(db),
-                            referencedColumn:
-                                $$PaymentsTableReferences._clientIdTable(db).id,
-                          )
-                          as T;
-                }
-
-                return state;
-              },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$PaymentsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $PaymentsTable,
-      Payment,
-      $$PaymentsTableFilterComposer,
-      $$PaymentsTableOrderingComposer,
-      $$PaymentsTableAnnotationComposer,
-      $$PaymentsTableCreateCompanionBuilder,
-      $$PaymentsTableUpdateCompanionBuilder,
-      (Payment, $$PaymentsTableReferences),
-      Payment,
-      PrefetchHooks Function({bool clientId})
     >;
 
 class $AppDatabaseManager {
@@ -5012,10 +5219,10 @@ class $AppDatabaseManager {
       $$EmployeesTableTableManager(_db, _db.employees);
   $$ActivityTypesTableTableManager get activityTypes =>
       $$ActivityTypesTableTableManager(_db, _db.activityTypes);
-  $$SessionsTableTableManager get sessions =>
-      $$SessionsTableTableManager(_db, _db.sessions);
   $$PaymentsTableTableManager get payments =>
       $$PaymentsTableTableManager(_db, _db.payments);
+  $$SessionsTableTableManager get sessions =>
+      $$SessionsTableTableManager(_db, _db.sessions);
 }
 
 mixin _$ScheduleDaoMixin on DatabaseAccessor<AppDatabase> {
@@ -5023,6 +5230,7 @@ mixin _$ScheduleDaoMixin on DatabaseAccessor<AppDatabase> {
   $ChildrenTable get children => attachedDatabase.children;
   $EmployeesTable get employees => attachedDatabase.employees;
   $ActivityTypesTable get activityTypes => attachedDatabase.activityTypes;
+  $PaymentsTable get payments => attachedDatabase.payments;
   $SessionsTable get sessions => attachedDatabase.sessions;
 }
 mixin _$ClientDaoMixin on DatabaseAccessor<AppDatabase> {
@@ -5031,8 +5239,8 @@ mixin _$ClientDaoMixin on DatabaseAccessor<AppDatabase> {
 }
 mixin _$PaymentDaoMixin on DatabaseAccessor<AppDatabase> {
   $ParentsTable get parents => attachedDatabase.parents;
-  $ChildrenTable get children => attachedDatabase.children;
   $PaymentsTable get payments => attachedDatabase.payments;
+  $ChildrenTable get children => attachedDatabase.children;
   $EmployeesTable get employees => attachedDatabase.employees;
   $ActivityTypesTable get activityTypes => attachedDatabase.activityTypes;
   $SessionsTable get sessions => attachedDatabase.sessions;

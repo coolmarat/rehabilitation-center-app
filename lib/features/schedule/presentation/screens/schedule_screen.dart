@@ -7,8 +7,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart'; // Для форматирования дат
 import 'package:rehabilitation_center_app/features/activity_types/domain/activity_type.dart';
 import 'package:rehabilitation_center_app/features/clients/domain/child.dart';
+import 'package:rehabilitation_center_app/features/clients/domain/parent.dart'
+    as client_parent;
 // Domain models
-// Parent import удален, т.к. логика перенесена в BLoC // Для типа Parent
 import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart'; // Включает ClientState и ClientStatus
 import 'package:rehabilitation_center_app/features/employees/domain/employee.dart';
 // BLoCs imports
@@ -655,6 +656,7 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
   final _formKey = GlobalKey<FormState>();
   int? _selectedEmployeeId;
   int? _selectedActivityTypeId;
+  int? _selectedParentId;
   int? _selectedChildId;
   TimeOfDay? _selectedTime;
   final _priceController = TextEditingController();
@@ -759,27 +761,57 @@ class _AddSessionDialogContentState extends State<_AddSessionDialogContent> {
                     ),
 
                     const SizedBox(height: 8),
-                    // --- Child Dropdown ---
-                    FilterableDropdown<Child>(
-                      items: state.formData.children,
-                      getName: (child) => child.fullName,
-                      getId: (child) => child.id,
-                      handleSelected: (child) {
+                    // --- Parent Dropdown ---
+                    FilterableDropdown<client_parent.Parent>(
+                      items: state.formData.parents,
+                      getName: (parent) => parent.fullName,
+                      getId: (parent) => parent.id,
+                      handleSelected: (parent) {
                         setState(() {
-                          _selectedChildId = child.id;
-                        });
-                        context.read<ScheduleBloc>().add(
-                          GetClientSessionBalance(child.id),
-                        );
-                      },
-                      onClearSelected: () {
-                        setState(() {
+                          _selectedParentId = parent.id;
                           _selectedChildId = null;
                         });
                       },
-                      hintText: 'Ребенок',
-                      // TODO: Add validation equivalent if needed
+                      onClearSelected: () {
+                        setState(() {
+                          _selectedParentId = null;
+                          _selectedChildId = null;
+                        });
+                      },
+                      hintText: 'Родитель',
                     ),
+
+                    const SizedBox(height: 8),
+                    // --- Child Dropdown ---
+                    if (_selectedParentId != null)
+                      FilterableDropdown<Child>(
+                        items: state.formData.getChildrenForParent(
+                          _selectedParentId!,
+                        ),
+                        getName: (child) => child.fullName,
+                        getId: (child) => child.id,
+                        handleSelected: (child) {
+                          setState(() {
+                            _selectedChildId = child.id;
+                          });
+                          context.read<ScheduleBloc>().add(
+                            GetClientSessionBalance(child.id),
+                          );
+                        },
+                        onClearSelected: () {
+                          setState(() {
+                            _selectedChildId = null;
+                          });
+                        },
+                        hintText: 'Ребенок',
+                      )
+                    else
+                      TextFormField(
+                        enabled: false,
+                        decoration: const InputDecoration(
+                          hintText: 'Сначала выберите родителя',
+                        ),
+                      ),
                     if (_selectedChildId != null)
                       BlocBuilder<ScheduleBloc, ScheduleState>(
                         buildWhen: (previous, current) {
@@ -1405,14 +1437,13 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
 
     // Показываем индикатор загрузки
     final loadingOverlay = OverlayEntry(
-      builder: (context) => Container(
-        color: Colors.black.withOpacity(0.3),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      builder:
+          (context) => Container(
+            color: Colors.black.withOpacity(0.3),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
     );
-    
+
     // Не показываем оверлей до получения состояния PaymentConfirmationState
 
     // Отправляем событие для обработки подтверждения оплаты
@@ -1426,12 +1457,14 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     bool dialogShown = false;
     final completer = Completer<void>();
     late StreamSubscription subscription;
-    
+
     subscription = scheduleBloc.stream.listen((state) async {
       if (state is PaymentConfirmationState && !dialogShown) {
         dialogShown = true;
-        print('Debug: Showing payment dialog with balance: ${state.currentBalance}');
-        
+        print(
+          'Debug: Showing payment dialog with balance: ${state.currentBalance}',
+        );
+
         // Отображаем диалог с полученными данными
         await _proceedWithPaymentDialog(
           state.currentBalance,
@@ -1457,7 +1490,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
             } catch (e) {
               print('Error removing overlay in timeout: $e');
             }
-            
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Ошибка получения баланса'),
@@ -1472,7 +1505,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
 
     // Ждем завершения диалога без ограничения по времени
     await completer.future;
-    
+
     // Очищаем подписку после завершения
     await subscription.cancel();
   }
@@ -1529,7 +1562,7 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
     _shouldDeductPayment = shouldDeduct == true;
     if (_shouldDeductPayment) {
       _sessionPriceForDeduction = sessionPrice.toDouble();
-      
+
       // Если пользователь подтвердил оплату, закрываем все диалоги и выполняем оплату
       final scheduleBloc = BlocProvider.of<ScheduleBloc>(context);
       scheduleBloc.add(
@@ -1538,15 +1571,17 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
           amount: sessionPrice.toDouble(),
         ),
       );
-      
+
       // Закрываем все открытые диалоги и возвращаемся к расписанию
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop(); // Закрываем диалог оплаты
       }
       if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop(); // Закрываем диалог редактирования занятия, если он есть
+        Navigator.of(
+          context,
+        ).pop(); // Закрываем диалог редактирования занятия, если он есть
       }
-      
+
       // Показываем уведомление об успешной оплате
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1560,7 +1595,9 @@ class _EditSessionDialogContentState extends State<_EditSessionDialogContent> {
         Navigator.of(context).pop(); // Закрываем диалог оплаты
       }
       if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop(); // Закрываем диалог редактирования занятия, если он есть
+        Navigator.of(
+          context,
+        ).pop(); // Закрываем диалог редактирования занятия, если он есть
       }
     }
   }

@@ -10,6 +10,9 @@ abstract class ClientLocalDataSource {
   Future<void> updateParentBalance(int parentId, double newBalance);
   Future<int> getParentIdByChildId(int childId);
 
+  /// Записывает пополнение баланса в таблицу payments
+  Future<void> recordTopUp(int parentId, double amount);
+
   Future<List<ChildEntry>> getChildrenForParent(int parentId);
   Future<int> addChild(ChildrenCompanion child);
   Future<bool> updateChild(ChildrenCompanion child);
@@ -31,7 +34,8 @@ class ClientLocalDataSourceImpl implements ClientLocalDataSource {
   Future<int> addParent(ParentsCompanion parent) => clientDao.addParent(parent);
 
   @override
-  Future<bool> updateParent(ParentsCompanion parent) => clientDao.updateParent(parent);
+  Future<bool> updateParent(ParentsCompanion parent) =>
+      clientDao.updateParent(parent);
 
   @override
   Future<int> deleteParent(int id) => clientDao.deleteParent(id);
@@ -41,7 +45,8 @@ class ClientLocalDataSourceImpl implements ClientLocalDataSource {
       clientDao.updateParentBalance(parentId, newBalance);
 
   @override
-  Future<int> getParentIdByChildId(int childId) => clientDao.getParentIdByChildId(childId);
+  Future<int> getParentIdByChildId(int childId) =>
+      clientDao.getParentIdByChildId(childId);
 
   @override
   Future<List<ChildEntry>> getChildrenForParent(int parentId) =>
@@ -51,10 +56,15 @@ class ClientLocalDataSourceImpl implements ClientLocalDataSource {
   Future<int> addChild(ChildrenCompanion child) => clientDao.addChild(child);
 
   @override
-  Future<bool> updateChild(ChildrenCompanion child) => clientDao.updateChild(child);
+  Future<bool> updateChild(ChildrenCompanion child) =>
+      clientDao.updateChild(child);
 
   @override
   Future<int> deleteChild(int id) => clientDao.deleteChild(id);
+
+  @override
+  Future<void> recordTopUp(int parentId, double amount) async {
+    final paymentDao = clientDao.db.paymentDao;
+    await paymentDao.insertTopUp(parentId, amount);
+  }
 }
-
-

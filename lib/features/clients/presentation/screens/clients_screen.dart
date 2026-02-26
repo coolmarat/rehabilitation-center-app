@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:rehabilitation_center_app/core/database/app_database.dart';
 import 'package:rehabilitation_center_app/core/widgets/confirmation_dialog.dart';
-// import 'package:rehabilitation_center_app/features/clients/domain/parent.dart'; // Удаляем неиспользуемый импорт
 import 'package:rehabilitation_center_app/features/clients/domain/parent.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/bloc/client_bloc.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/di/client_dependencies.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/widgets/child_form_dialog.dart';
+import 'package:rehabilitation_center_app/features/clients/presentation/widgets/parent_balance_history_dialog.dart';
 import 'package:rehabilitation_center_app/features/clients/presentation/widgets/parent_form_dialog.dart';
+import 'package:rehabilitation_center_app/injection_container.dart';
 
 class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
@@ -121,11 +123,15 @@ class _ClientsScreenState extends State<ClientsScreen> {
               key: formKey,
               child: ListBody(
                 children: <Widget>[
-                  Text('Текущий баланс: ${parent.balance.toStringAsFixed(2)} руб.'),
+                  Text(
+                    'Текущий баланс: ${parent.balance.toStringAsFixed(2)} руб.',
+                  ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     autofocus: true,
                     decoration: const InputDecoration(
                       labelText: 'Сумма пополнения',
@@ -137,7 +143,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
                         return 'Введите сумму';
                       }
                       // Allow both comma and dot as decimal separators
-                      final amount = double.tryParse(value.replaceAll(',', '.'));
+                      final amount = double.tryParse(
+                        value.replaceAll(',', '.'),
+                      );
                       if (amount == null) {
                         return 'Некорректное число';
                       }
@@ -162,11 +170,13 @@ class _ClientsScreenState extends State<ClientsScreen> {
               child: const Text('Пополнить'),
               onPressed: () {
                 if (formKey.currentState!.validate()) {
-                  final amount = double.parse(amountController.text.replaceAll(',', '.'));
+                  final amount = double.parse(
+                    amountController.text.replaceAll(',', '.'),
+                  );
                   // Use the main context to access the BLoC
                   context.read<ClientBloc>().add(
-                        TopUpBalance(parentId: parent.id, amount: amount),
-                      );
+                    TopUpBalance(parentId: parent.id, amount: amount),
+                  );
                   Navigator.of(dialogContext).pop();
                 }
               },
@@ -253,7 +263,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 // Устанавливаем начальное состояние разворота
                                 initiallyExpanded: shouldExpand,
                                 title: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Text(
@@ -262,17 +273,27 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTap: () => _showTopUpDialog(context, parent),
+                                      onTap:
+                                          () =>
+                                              _showTopUpDialog(context, parent),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0,
+                                          vertical: 4.0,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).splashColor,
-                                          borderRadius: BorderRadius.circular(8.0),
+                                          borderRadius: BorderRadius.circular(
+                                            8.0,
+                                          ),
                                         ),
                                         child: Text(
                                           '${parent.balance.toStringAsFixed(2)} руб.',
                                           style: TextStyle(
-                                            color: parent.balance < 0 ? Colors.redAccent : Colors.green,
+                                            color:
+                                                parent.balance < 0
+                                                    ? Colors.redAccent
+                                                    : Colors.green,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -284,11 +305,23 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    // Кнопка истории баланса
+                                    IconButton(
+                                      icon: const Icon(Icons.history, size: 20),
+                                      tooltip: 'История баланса',
+                                      onPressed: () {
+                                        showParentBalanceHistoryDialog(
+                                          context: context,
+                                          db: sl<AppDatabase>(),
+                                          parent: parent,
+                                          children: children,
+                                        );
+                                      },
+                                    ),
                                     IconButton(
                                       icon: const Icon(Icons.edit, size: 20),
                                       tooltip: 'Редактировать родителя',
                                       onPressed: () {
-                                        // Используем context из Builder
                                         showParentFormDialog(
                                           context,
                                           parent: parent,
@@ -303,7 +336,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                       ),
                                       tooltip: 'Удалить родителя',
                                       onPressed: () async {
-                                        // Используем context из Builder
                                         final confirmed =
                                             await showConfirmationDialog(
                                               context: context,

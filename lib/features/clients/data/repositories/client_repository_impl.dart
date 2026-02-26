@@ -14,43 +14,42 @@ class ClientRepositoryImpl implements ClientRepository {
 
   // --- Mappers ---
   Parent _mapParentEntryToParent(ParentEntry entry) => Parent(
-        id: entry.id,
-        fullName: entry.fullName,
-        phoneNumber: entry.phoneNumber,
-        email: entry.email,
-        address: entry.address,
-        balance: entry.balance,
-      );
+    id: entry.id,
+    fullName: entry.fullName,
+    phoneNumber: entry.phoneNumber,
+    email: entry.email,
+    address: entry.address,
+    balance: entry.balance,
+  );
 
   ParentsCompanion _mapParentToCompanion(Parent parent) => ParentsCompanion(
-        id: parent.id == 0 ? const Value.absent() : Value(parent.id),
-        fullName: Value(parent.fullName),
-        phoneNumber: Value(parent.phoneNumber),
-        email: Value(parent.email),
-        address: Value(parent.address),
-        balance: Value(parent.balance),
-      );
+    id: parent.id == 0 ? const Value.absent() : Value(parent.id),
+    fullName: Value(parent.fullName),
+    phoneNumber: Value(parent.phoneNumber),
+    email: Value(parent.email),
+    address: Value(parent.address),
+    balance: Value(parent.balance),
+  );
 
   Child _mapChildEntryToChild(ChildEntry entry) => Child(
-        id: entry.id,
-        parentId: entry.parentId,
-        fullName: entry.fullName,
-        dateOfBirth: entry.dateOfBirth,
-        diagnosis: entry.diagnosis,
-      );
+    id: entry.id,
+    parentId: entry.parentId,
+    fullName: entry.fullName,
+    dateOfBirth: entry.dateOfBirth,
+    diagnosis: entry.diagnosis,
+  );
 
   ChildrenCompanion _mapChildToCompanion(Child child) => ChildrenCompanion(
-        id: child.id == 0 ? const Value.absent() : Value(child.id),
-        parentId: Value(child.parentId),
-        fullName: Value(child.fullName),
-        dateOfBirth: Value(child.dateOfBirth),
-        diagnosis: Value(child.diagnosis),
-      );
+    id: child.id == 0 ? const Value.absent() : Value(child.id),
+    parentId: Value(child.parentId),
+    fullName: Value(child.fullName),
+    dateOfBirth: Value(child.dateOfBirth),
+    diagnosis: Value(child.diagnosis),
+  );
 
   // --- Repository Methods ---
 
-  Future<Either<Failure, T>> _tryCatch<T>(
-      Future<T> Function() function) async {
+  Future<Either<Failure, T>> _tryCatch<T>(Future<T> Function() function) async {
     try {
       final result = await function();
       return Right(result);
@@ -89,13 +88,16 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
-  Future<Either<Failure, Map<Parent, List<Child>>>> getAllParentsWithChildren() {
+  Future<Either<Failure, Map<Parent, List<Child>>>>
+  getAllParentsWithChildren() {
     return _tryCatch(() async {
       final parentEntries = await localDataSource.getParents();
       final parents = parentEntries.map(_mapParentEntryToParent).toList();
       final Map<Parent, List<Child>> result = {};
       for (final parent in parents) {
-        final childEntries = await localDataSource.getChildrenForParent(parent.id);
+        final childEntries = await localDataSource.getChildrenForParent(
+          parent.id,
+        );
         final children = childEntries.map(_mapChildEntryToChild).toList();
         result[parent] = children;
       }
@@ -125,8 +127,10 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateParentBalance(
-      {required int parentId, required double amount}) {
+  Future<Either<Failure, void>> updateParentBalance({
+    required int parentId,
+    required double amount,
+  }) {
     return _tryCatch(() async {
       final parentEither = await getParentById(parentId);
       return parentEither.fold(
@@ -134,6 +138,10 @@ class ClientRepositoryImpl implements ClientRepository {
         (parent) async {
           final newBalance = parent.balance + amount;
           await localDataSource.updateParentBalance(parentId, newBalance);
+          // Записываем пополнение в историю (только для пополнений, не для списаний)
+          if (amount > 0) {
+            await localDataSource.recordTopUp(parentId, amount);
+          }
         },
       );
     });

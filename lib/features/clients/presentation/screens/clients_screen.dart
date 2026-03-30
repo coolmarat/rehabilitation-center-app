@@ -315,6 +315,11 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                           db: sl<AppDatabase>(),
                                           parent: parent,
                                           children: children,
+                                          onBalanceUpdated: () {
+                                            context.read<ClientBloc>().add(
+                                              LoadClients(),
+                                            );
+                                          },
                                         );
                                       },
                                     ),

@@ -11,13 +11,19 @@ Future<void> showParentBalanceHistoryDialog({
   required AppDatabase db,
   required Parent parent,
   required List<Child> children,
+  VoidCallback? onBalanceUpdated,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder:
-        (_) => _BalanceHistorySheet(db: db, parent: parent, children: children),
+        (_) => _BalanceHistorySheet(
+          db: db,
+          parent: parent,
+          children: children,
+          onBalanceUpdated: onBalanceUpdated,
+        ),
   );
 }
 
@@ -25,11 +31,13 @@ class _BalanceHistorySheet extends StatefulWidget {
   final AppDatabase db;
   final Parent parent;
   final List<Child> children;
+  final VoidCallback? onBalanceUpdated;
 
   const _BalanceHistorySheet({
     required this.db,
     required this.parent,
     required this.children,
+    this.onBalanceUpdated,
   });
 
   @override
@@ -39,6 +47,7 @@ class _BalanceHistorySheet extends StatefulWidget {
 class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
   bool _isLoading = true;
   String? _error;
+  late double _currentBalance;
 
   List<Payment> _payments = [];
   List<_SessionRow> _sessionRows = [];
@@ -49,6 +58,7 @@ class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
   @override
   void initState() {
     super.initState();
+    _currentBalance = widget.parent.balance;
     _loadData();
   }
 
@@ -75,6 +85,8 @@ class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
             );
           }).toList();
 
+      _debugPrintLoadedHistory(payments: payments, sessionRows: sessionRows);
+
       if (mounted) {
         setState(() {
           _payments = payments;
@@ -92,13 +104,69 @@ class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
     }
   }
 
+  void _debugPrintLoadedHistory({
+    required List<Payment> payments,
+    required List<_SessionRow> sessionRows,
+  }) {
+    final combinedEntries = <_HistoryEntry>[
+      ...payments.map((payment) => _PaymentEntry(payment)),
+      ...sessionRows.map((row) => _SessionEntry(row)),
+    ]..sort((a, b) => b.date.compareTo(a.date));
+
+    debugPrint('======== Parent Balance History Debug ========');
+    debugPrint(
+      'Parent: ${widget.parent.id} | ${widget.parent.fullName} | currentBalance=$_currentBalance',
+    );
+    debugPrint('Payments count: ${payments.length}');
+
+    for (final payment in payments) {
+      debugPrint(
+        'PAYMENT id=${payment.id}, clientId=${payment.clientId}, date=${payment.paymentDate.toIso8601String()}, amount=${payment.amount}, type=${payment.type}',
+      );
+    }
+
+    debugPrint('Sessions count: ${sessionRows.length}');
+
+    for (final row in sessionRows) {
+      debugPrint(
+        'SESSION id=${row.session.id}, child=${row.childFullName}, date=${row.session.sessionDateTime.toIso8601String()}, price=${row.session.price}, activity=${row.activityName}',
+      );
+    }
+
+    debugPrint('Combined entries shown in dialog: ${combinedEntries.length}');
+
+    for (final entry in combinedEntries) {
+      switch (entry) {
+        case _PaymentEntry(:final payment):
+          debugPrint(
+            'ENTRY payment id=${payment.id}, date=${payment.paymentDate.toIso8601String()}, amount=${payment.amount}',
+          );
+        case _SessionEntry(:final row):
+          debugPrint(
+            'ENTRY session id=${row.session.id}, date=${row.session.sessionDateTime.toIso8601String()}, price=${row.session.price}',
+          );
+      }
+    }
+
+    final totalSessions = sessionRows.fold<double>(
+      0,
+      (sum, row) => sum + row.session.price,
+    );
+    final totalTopUps = _currentBalance + totalSessions;
+
+    debugPrint(
+      'Summary totals: totalTopUps=$totalTopUps, totalSessions=$totalSessions, balance=$_currentBalance',
+    );
+    debugPrint('=============================================');
+  }
+
   /// Сумма всех занятий (расходы)
   double get _totalSessions =>
       _sessionRows.fold(0.0, (sum, r) => sum + r.session.price);
 
   /// Общая сумма пополнений = баланс + занятия
   /// (включает пополнения, сделанные до начала записи)
-  double get _totalTopUps => widget.parent.balance + _totalSessions;
+  double get _totalTopUps => _currentBalance + _totalSessions;
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +251,7 @@ class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
           return _SummaryCard(
             totalTopUps: _totalTopUps,
             totalSessions: _totalSessions,
-            balance: widget.parent.balance,
+            balance: _currentBalance,
             currencyFormat: _currencyFormat,
           );
         }
@@ -193,6 +261,7 @@ class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
             payment: entry.payment,
             dateFormat: _dateFormat,
             currencyFormat: _currencyFormat,
+            onEdit: () => _showEditPaymentDialog(entry.payment),
           );
         } else if (entry is _SessionEntry) {
           return _SessionTile(
@@ -205,6 +274,79 @@ class _BalanceHistorySheetState extends State<_BalanceHistorySheet> {
         return const SizedBox.shrink();
       },
     );
+  }
+
+  Future<void> _showEditPaymentDialog(Payment payment) async {
+    final controller = TextEditingController(text: payment.amount.toString());
+    final result = await showDialog<double>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Изменить сумму пополнения'),
+            content: TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(labelText: 'Сумма (₽)'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newAmount = double.tryParse(
+                    controller.text.replaceAll(',', '.'),
+                  );
+                  Navigator.pop(context, newAmount);
+                },
+                child: const Text('Сохранить'),
+              ),
+            ],
+          ),
+    );
+
+    if (result != null && result != payment.amount && result >= 0) {
+      try {
+        if (mounted) {
+          setState(() {
+            _isLoading = true;
+          });
+        }
+
+        await widget.db.paymentDao.updateTopUpAmount(
+          payment.id,
+          widget.parent.id,
+          payment.amount,
+          result,
+        );
+
+        final updatedParent =
+            await (widget.db.select(widget.db.parents)
+              ..where((p) => p.id.equals(widget.parent.id))).getSingle();
+
+        if (mounted) {
+          setState(() {
+            _currentBalance = updatedParent.balance;
+          });
+
+          widget.onBalanceUpdated?.call();
+
+          await _loadData();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ошибка обновления суммы: $e')),
+          );
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
   }
 }
 
@@ -246,11 +388,13 @@ class _PaymentTile extends StatelessWidget {
   final Payment payment;
   final DateFormat dateFormat;
   final NumberFormat currencyFormat;
+  final VoidCallback onEdit;
 
   const _PaymentTile({
     required this.payment,
     required this.dateFormat,
     required this.currencyFormat,
+    required this.onEdit,
   });
 
   @override
@@ -262,13 +406,24 @@ class _PaymentTile extends StatelessWidget {
       ),
       title: const Text('Пополнение баланса'),
       subtitle: Text(dateFormat.format(payment.paymentDate.toLocal())),
-      trailing: Text(
-        '+${currencyFormat.format(payment.amount)} ₽',
-        style: const TextStyle(
-          color: Colors.green,
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '+${currencyFormat.format(payment.amount)} ₽',
+            style: const TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit, size: 18),
+            onPressed: onEdit,
+            splashRadius: 20,
+            tooltip: 'Изменить сумму',
+          ),
+        ],
       ),
     );
   }

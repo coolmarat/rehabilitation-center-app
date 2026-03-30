@@ -86,6 +86,35 @@ class PaymentDao extends DatabaseAccessor<AppDatabase> with _$PaymentDaoMixin {
     );
   }
 
+  /// Обновляет сумму пополнения и пересчитывает баланс родителя.
+  Future<void> updateTopUpAmount(
+    int paymentId,
+    int parentId,
+    double oldAmount,
+    double newAmount,
+  ) async {
+    return transaction(() async {
+      // 1. Обновляем сумму платежа
+      await (update(payments)..where(
+        (p) => p.id.equals(paymentId),
+      )).write(PaymentsCompanion(amount: Value(newAmount)));
+
+      // 2. Вычисляем разницу
+      final difference = newAmount - oldAmount;
+
+      // 3. Обновляем баланс родителя
+      // Получаем текущего родителя (используем таблицу parents из AppDatabase)
+      final parentQuery = select(db.parents)
+        ..where((p) => p.id.equals(parentId));
+      final parent = await parentQuery.getSingle();
+
+      final newBalance = parent.balance + difference;
+      await (update(db.parents)..where(
+        (p) => p.id.equals(parentId),
+      )).write(ParentsCompanion(balance: Value(newBalance)));
+    });
+  }
+
   /// Возвращает все пополнения (платежи) родителя.
   Future<List<Payment>> getPaymentsForParent(int parentId) =>
       (select(payments)
